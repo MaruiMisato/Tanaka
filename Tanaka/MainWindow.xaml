@@ -1,0 +1,48 @@
+﻿<Window x:Class="Tanaka.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Tanaka"
+        mc:Ignorable="d"
+        Title="Tanaka" Height="450" Width="800">
+    <Grid>
+        <CheckBox x:Name="ExecutFilesRename" Content="ExecutFilesRename" HorizontalAlignment="Left" Margin="328,10,0,0" VerticalAlignment="Top" IsChecked="True"/>
+        <CheckBox x:Name="MarginRemove" Content="MarginRemove" HorizontalAlignment="Left" Margin="328,30,0,0" VerticalAlignment="Top" IsChecked="True"/>
+        <CheckBox x:Name="PNGout" Content="PNGout" HorizontalAlignment="Left" Margin="328,50,0,0" VerticalAlignment="Top" IsChecked="True"/>
+        <GroupBox Header="Shaving" Margin="328,90,340,250">
+            <StackPanel HorizontalAlignment="Left" Width="114.122" Margin="0,0,0,0">
+                <RadioButton x:Name="StandardMode" Content="Standard" IsChecked="True"/>
+                <RadioButton Content="Strong"  />
+                <RadioButton x:Name="StrongestMode" Content="Strongest" />
+            </StackPanel>
+        </GroupBox>
+        <GroupBox Header="Compress Level" Margin="460,90,210,250">
+            <StackPanel HorizontalAlignment="Left" Width="114.122" Margin="0,0,0,0">
+                <RadioButton x:Name="Max" Content="Max" />
+                <RadioButton x:Name="Default" Content="Default"  IsChecked="True" />
+                <RadioButton x:Name="None" Content="None" />
+            </StackPanel>
+        </GroupBox>
+        <GroupBox Header="Compress format" Margin="460,5,210,325">
+            <StackPanel HorizontalAlignment="Left" Width="114.122" Margin="-1.014,0,-3.04,0">
+                <RadioButton x:Name="Zip" Content="zip (7z 19.00)" />
+                <RadioButton x:Name="SevenZip" Content="7z (7z 19.00)"  />
+                <RadioButton x:Name="Rar" Content="rar (Rar 5.3.1)"  IsChecked="True"/>
+                <RadioButton x:Name="NotArchive" Content="NotArchive"/>
+            </StackPanel>
+        </GroupBox>
+        <Button x:Name="ExeButton" Content="1.Rename           &#xD;&#xA;2.Margin remove  &#xD;&#xA;3.PNG optimize    &#xD;&#xA;4.zip rar 7z    " HorizontalAlignment="Left" Margin="593.855,5.426,0,0" VerticalAlignment="Top" Width="125.676" Height="150.704" RenderTransformOrigin="0.5,0.5" Click="ExeButton_Click">
+            <Button.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform AngleX="-0.495"/>
+                    <RotateTransform/>
+                    <TranslateTransform X="-0.498"/>
+                </TransformGroup>
+            </Button.RenderTransform>
+        </Button>
+        <TextBox x:Name="FolderLog" HorizontalAlignment="Left" Height="154.757" Margin="22.352,13.541,0,0" TextWrapping="Wrap" Text="FolderLog" VerticalAlignment="Top" Width="298.379"/>
+        <TextBox x:Name="FilesLog" HorizontalAlignment="Left" Height="235.839" Margin="22.351,174.683,0,0" TextWrapping="Wrap" Text="FilesLog" VerticalAlignment="Top" Width="694.662"/>
+    </Grid>
+</Window>

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2005
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tanaka", "Tanaka\Tanaka.csproj", "{F13E8C99-7814-4ADC-BA45-6190797160C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Debug|x64.ActiveCfg = Debug|x64
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Debug|x64.Build.0 = Debug|x64
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Release|x64.ActiveCfg = Release|x64
+		{F13E8C99-7814-4ADC-BA45-6190797160C8}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {24089136-E43E-48A1-81ED-48A46BFFFAF7}
+	EndGlobalSection
+EndGlobal
