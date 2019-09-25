@@ -15,7 +15,7 @@ public class EntryPoint {
                 IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*", System.IO.SearchOption.TopDirectoryOnly);//Acquire  files  the path.
                 string[] AllOldFileName = new string[files.Count()];//36*25+100 ファイル数 ゴミ込み
                 if ((bool)ConfMainWindow.ExecutFilesRename.IsChecked)//リネームするか？
-                    if (!FilesRename.RenameFiles(ConfMainWindow, PathName, files, AllOldFileName))
+                    if (!FilesRename.RenameFiles(ConfMainWindow, in PathName, ref files, AllOldFileName))
                         return;//リネーム失敗
                 long[] FilesSize = new long[2];
                 FilesSize[0] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
@@ -82,7 +82,6 @@ public class EntryPoint {
         }
         StandardAlgorithm.ExecuteAnotherApp(in FileName, in Arguments, false, true);
         RenameNumberOnlyFile(ConfMainWindow, PathName, Extension);
-
     }
     private string GetNumberOnlyPath(string PathName) {//ファイル名からX巻のXのみを返す
         string FileName = System.IO.Path.GetFileName(PathName);//Z:\[宮下英樹] センゴク権兵衛 第05巻 ->[宮下英樹] センゴク権兵衛 第05巻
@@ -102,6 +101,5 @@ public class EntryPoint {
         if (!System.IO.File.Exists(NewFileName))//重複
             File.Move(PathName + Extension, NewFileName);//重複してない
         ConfMainWindow.FolderLog.Text += "\nCreated " + NewFileName + ".\n";//Show path
-
     }
 }

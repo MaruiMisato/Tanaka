@@ -66,11 +66,11 @@ public class ImageAlgorithm {
         }
         LaplacianImage.Dispose();
         writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + " threshold=" + ImageThreshold.Concentration + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());
-        Mat OutputCutImage = new Mat(NewImageRect.Height, NewImageRect.Width, MatType.CV_8U, Channel);//IplImage OutputCutImage = Cv.CreateImage(NewImageRect.Size, BitDepth.U8, Channel);
+        Mat OutputCutImage;//IplImage OutputCutImage = Cv.CreateImage(NewImageRect.Size, BitDepth.U8, Channel);
         if (Channel == Image.Is.GrayScale) {
             OutputCutImage = InputGrayImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));//WhiteCut(InputGrayImage, OutputCutImage, NewImageRect);
             InputGrayImage.Dispose();
-            Image.Transform2Linear(OutputCutImage, Histgram.Max(), Histgram.Min());// 階調値変換
+            Image.LinearStretch(OutputCutImage, Histgram.Max(), Histgram.Min());// 階調値変換
         } else {//Is.Color
             Mat InputColorImage = Cv2.ImRead(f, ImreadModes.Color);//IplImage InputGrayImage = Cv.LoadImage(f, LoadMode.GrayScale);
             OutputCutImage = InputColorImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));//WhiteCut(InputGrayImage, OutputCutImage,
@@ -85,7 +85,7 @@ public class ImageAlgorithm {
         Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size, BitDepth.U8, 1);
         ImageAlgorithm.MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
-        int Channel = Image.GetHistgramR(in f, ref Histgram);//GetImageToneValue(f, out int Channel, out Histgram);
+        _ = Image.GetHistgramR(in f, ref Histgram);//GetImageToneValue(f, out int Channel, out Histgram);
         if (Histgram.Max() == Histgram.Min()) {//最大値と最小値が同じなら豆腐か黒塗り．つまり処理不要，手動で削除しとけ
             InputGrayImage.Dispose();
             LaplacianImage.Dispose();
@@ -232,13 +232,11 @@ public class ImageAlgorithm {
             }
         }
         Cv2.ImWrite(f, p_img, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));//Cv.SaveImage(f,p_img,new ImageEncodingParam(ImageEncodingID.PngCompression,0));
-
         //ShowImage(nameof(p_img),p_img);
         q_img.Dispose();
         p_img.Dispose();
     }
     private static unsafe void NoiseRemoveWhite(in string f, byte min) {
-
         Mat p_img = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage p_img = Cv.LoadImage(f,LoadMode.GrayScale);
         Mat q_img = p_img.Clone();//IplImage q_img = Cv.CreateImage(p_img.Size,BitDepth.U8,1);//Cv.Copy(p_img,q_img);
         byte* p = p_img.DataPointer; byte* q = q_img.DataPointer;//byte* p = (byte*)p_img.ImageData, q = (byte*)q_img.ImageData;
@@ -285,12 +283,15 @@ public class ImageAlgorithm {
             if (TargetXColumnYRow[xory] > InstanceThreshold)//実態あり
                 ++NewHeightWidth;
         }
+        if (NewHeightWidth < 1)
+            ++NewHeightWidth;
         return NewHeightWidth;
     }
     private static unsafe bool UselessYRowSpacingDeletion(in string f) {
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage InputGrayImage = Cv.LoadImage(f,LoadMode.GrayScale);//
         Mat LaplacianImage = new Mat();//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size,BitDepth.U8,1);
-        Cv2.Laplacian(InputGrayImage, LaplacianImage, MatType.CV_8U);//Cv.Laplace(InputGrayImage,LaplacianImage,ApertureSize.Size1);
+        Cv2.Laplacian(InputGrayImage, LaplacianImage, InputGrayImage.Depth());//Cv.Laplace(InputGrayImage,LaplacianImage,ApertureSize.Size1);
+        System.Windows.MessageBox.Show(f);
         byte* p = LaplacianImage.DataPointer;//byte* p = (byte*)LaplacianImage.ImageData;
         int[] TargetYRow = new int[LaplacianImage.Height];//TargetYRow[y]が閾値以下ならその行を削除
         for (int y = 0; y < LaplacianImage.Height; y++)
@@ -298,8 +299,10 @@ public class ImageAlgorithm {
                 if (p[LaplacianImage.Width * y + x] > 0) {
                     ++TargetYRow[y];
                 }
+        System.Windows.MessageBox.Show(f);
         int InstanceThreshold = 0;
-        Mat OutputCutImage = new Mat(GetNewHeightWidth(TargetYRow, LaplacianImage.Height, InstanceThreshold), InputGrayImage.Width, MatType.CV_8U, Image.Is.GrayScale);
+        Mat OutputCutImage = new Mat(GetNewHeightWidth(TargetYRow, LaplacianImage.Height, InstanceThreshold), InputGrayImage.Width, InputGrayImage.Depth(), Image.Is.GrayScale);
+
         //IplImage OutputCutImage = Cv.CreateImage(new CvSize(InputGrayImage.Width,GetNewHeightWidth(TargetYRow,LaplacianImage.Height,InstanceThreshold)),BitDepth.U8,Is.GrayScale);
         //byte* src = (byte*)InputGrayImage.ImageData, dst = (byte*)OutputCutImage.ImageData;
         byte* src = InputGrayImage.DataPointer; byte* dst = OutputCutImage.DataPointer;
@@ -357,12 +360,13 @@ public class ImageAlgorithm {
         for (int y = 2; y < InputGrayImage.Height - 2; ++y) {
             int yoffset = InputGrayImage.Cols * y;
             for (int x = 2; x < InputGrayImage.Cols - 2; ++x) {
-                int offset = (yoffset) + x;//current position
-                byte offset1 = src[offset + 1];//隣の奴をキャッシュに取っておく
-                if ((src[offset] != (offset1)) && ((offset1) == (src[offset - 1])) && ((offset1) == (src[offset + 2])) && ((offset1) == (src[offset - InputGrayImage.Cols])) && ((offset1) == (src[offset + InputGrayImage.Cols])) && ((src[offset - 2]) == (offset1)) && ((src[offset - 2 * InputGrayImage.Cols]) == (offset1)) && ((src[offset + 2 * InputGrayImage.Cols]) == (offset1)))
-                    dst[offset] = (offset1);
+                int offset = yoffset + x;//current position
+                byte NeighborValue = src[offset + 1];//隣の奴をキャッシュに取っておく
+                if ((src[offset] != (NeighborValue)) && ((NeighborValue) == (src[offset - 1])) && ((NeighborValue) == (src[offset + 2])) && ((NeighborValue) == (src[offset - InputGrayImage.Cols])) && ((NeighborValue) == (src[offset + InputGrayImage.Cols])) && ((src[offset - 2]) == (NeighborValue)) && ((src[offset - 2 * InputGrayImage.Cols]) == (NeighborValue)) && ((src[offset + 2 * InputGrayImage.Cols]) == (NeighborValue)))
+                    dst[offset] = (NeighborValue);
             }
         }
+
         //byte* src = (byte*)InputGrayImage.ImageData, dst = (byte*)FixedImage.ImageData;
         //for (int y = 2; y < InputGrayImage.Height - 2; ++y) {
         //  for (int x = 2; x < InputGrayImage.Width - 2; ++x) {
@@ -378,30 +382,6 @@ public class ImageAlgorithm {
         FixedImage.Dispose();
         InputGrayImage.Dispose();
         return true;
-    }
-    private static unsafe void WhiteCutColor(in string f, Mat q_img, ImageRect NewImageRect) {//カラー画像は階調値線形変換はしない
-        //var bitmapimageOriginal = new BitmapImage(new Uri(f));
-        //占有しないパターン-1http://neareal.net/index.php?Programming%2F.NetFramework%2FWPF%2FWriteableBitmap%2FLoadReleaseableBitmapImage
-        System.IO.MemoryStream data = new System.IO.MemoryStream(File.ReadAllBytes(f));
-        WriteableBitmap wbmp = new WriteableBitmap(BitmapFrame.Create(data));
-        data.Close();
-        //Bitmap bmp = new Bitmap(f);
-        FormatConvertedBitmap bitmap = new FormatConvertedBitmap(wbmp, PixelFormats.Pbgra32, null, 0);//32bit で読む
-        byte[] originalPixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
-        // BitmapSourceから配列にコピー
-        //https://water2litter.net/gin/?p=990
-        //https://imagingsolution.net/program/csharp/bitmap-data-memory-format/
-        int stride = (bitmap.PixelWidth * bitmap.Format.BitsPerPixel + 7) / 8;
-        bitmap.CopyPixels(originalPixels, stride, 0);
-        byte* q = q_img.DataPointer;
-        for (int y = NewImageRect.YLow; y < NewImageRect.YHigh; ++y)
-            for (int x = NewImageRect.XLow; x < NewImageRect.XHigh; ++x) {
-                int qoffset = (q_img.Width * (y - NewImageRect.YLow)) + (x - NewImageRect.XLow) * 3, offset = (bitmap.PixelWidth * y + x) * 4;
-                q[0 + qoffset] = originalPixels[0 + offset];
-                q[1 + qoffset] = originalPixels[1 + offset];
-                q[2 + qoffset] = originalPixels[2 + offset];
-            }
-        System.Windows.MessageBox.Show("Messagebox");
     }
     private static bool CompareArrayAnd(int ___Threshold___, int[] ___CompareArray___) {
         foreach (int ___CompareValue___ in ___CompareArray___) {

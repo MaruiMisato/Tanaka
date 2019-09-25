@@ -11,11 +11,8 @@ public class Image {
     }
     public class Const {//配列の宣言で使うことが多い 値に焦点
         public const int Tone8Bit = 256;
-        public const int Neighborhood8 = 9;
-        public const int Neighborhood4 = 5;
-    }
-    public class Var {//配列の宣言で使うことが多い 不変普遍定数ではない　ユーザが勝手に変えろ
-        public const int MaxMarginSize = 4;//実際は＋1
+        //public const int Neighborhood8 = 9;
+        //public const int Neighborhood4 = 5;
     }
     public static int GetHistgramR(in string f, ref byte[] Histgram) {//ここでグレーかカラーか判定
         int Channel = Is.GrayScale;//1:gray,3:bgr color
@@ -37,22 +34,21 @@ public class Image {
         int stride = (bitmap.PixelWidth * bitmap.Format.BitsPerPixel + 7) / 8;
         bitmap.CopyPixels(originalPixels, stride, 0);
 
-        for (int i = 0; i < originalPixels.Length; i = i + 4) {
+        for (int i = 0; i < originalPixels.Length; i += 4) {
             if (Channel == Is.Color || originalPixels[i] != originalPixels[i + 1] || originalPixels[i + 2] != originalPixels[i]) {//Color images are not executed.
                 Channel = Is.Color;
                 Histgram[(byte)((originalPixels[i] + originalPixels[i + 1] + originalPixels[i + 2] + 0.5) / 3)]++;//四捨五入
             } else
                 Histgram[originalPixels[i]]++;
         }
+
+        System.GC.Collect();
         return Channel;
-    }
-    private static byte CheckRange2Byte(int ByteValue) {
-        return (byte)(ByteValue > 255 ? 255 : ByteValue < 0 ? 0 : ByteValue);
     }
     private static byte CheckRange2Byte(double ByteValue) {
         return (byte)(ByteValue > 255 ? 255 : ByteValue < 0 ? 0 : ByteValue);
     }
-    public static unsafe void Transform2Linear(Mat p_img, int HistgramMax, int HistgramMin) {//階調値の線形変換 グレイスケールのみ
+    public static unsafe void LinearStretch(Mat p_img, int HistgramMax, int HistgramMin) {//階調値の線形変換 グレイスケールのみ
         double magnification = 255.99 / (HistgramMax - HistgramMin);//255.99ないと255が254になる
         byte* p = p_img.DataPointer;//byte* p = (byte*)p_img.ImageData;
         for (int y = 0; y < p_img.Width * p_img.Height; ++y)
