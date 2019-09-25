@@ -38,7 +38,7 @@ public class Image {
     }
     public static unsafe void LinearStretch(Mat p_img, int HistgramMax, int HistgramMin) {//階調値の線形変換 グレイスケールのみ
         double magnification = 255.99 / (HistgramMax - HistgramMin);//255.99ないと255が254になる
-        byte* p = p_img.DataPointer;//byte* p = (byte*)p_img.ImageData;
+        byte* p = p_img.DataPointer;
         for (int y = 0; y < p_img.Width * p_img.Height; ++y)
             p[y] = Image.CheckRange2Byte(magnification * (p[y] - HistgramMin));
     }
@@ -56,23 +56,23 @@ public class Image {
         return YIndex;
     }
     private static unsafe bool SelectAscendingDescendingOrder(Mat src_img) {
-        byte* src = src_img.DataPointer;//byte* src = (byte*)src_img.ImageData;
+        byte* src = src_img.DataPointer;
         return src[0] + src[src_img.Width * src_img.Height - (src_img.Width - src_img.Width) - 1] + src[src_img.Width - 1] + src[src_img.Width * src_img.Height - src_img.Width - 1] > 511 ? Is.DESCENDING_ORDER : Is.ASCENDING_ORDER;
     }
     delegate byte SelectBucketMedian(int[] Bucket, int Median);
     public static unsafe bool FastestMedian(Mat src_img, Mat dst_img, int n) {
-        dst_img = src_img.Clone();//Cv.Copy(src_img, dst_img);
+        dst_img = src_img.Clone();
         if ((n & 1) == 0) return false;//偶数はさいなら 元のをコピー
         int MaskSize = n >> 1;//
         SelectBucketMedian BucketMedian = GetBucketMedianAscendingOrder;
         if (SelectAscendingDescendingOrder(src_img) == Is.DESCENDING_ORDER)
             BucketMedian = GetBucketMedianDescendingOrder;
-        byte* dst = dst_img.DataPointer;//byte* dst = (byte*)dst_img.ImageData;
+        byte* dst = dst_img.DataPointer;
         dst += MaskSize * (src_img.Width) + MaskSize;
         for (int y = MaskSize; y < src_img.Height - MaskSize; ++y, dst += src_img.Width) {
             int[] Bucket = new int[Const.Tone8Bit];//256tone It is cleared each time
             for (int x = 0; x < n; ++x) {
-                byte* src = src_img.DataPointer;//byte* src = (byte*)src_img.ImageData
+                byte* src = src_img.DataPointer;
                 src += (y - MaskSize) * src_img.Width + x;
                 for (int yy = 0; yy < n; ++yy, src += src_img.Width)
                     ++Bucket[*src];
@@ -80,7 +80,7 @@ public class Image {
             *dst = BucketMedian(Bucket, ((n * n) >> 1));
 
             for (int x = 0; x < src_img.Width - n; ++x) {
-                byte* src = src_img.DataPointer;//byte* src = (byte*)src_img.ImageData
+                byte* src = src_img.DataPointer;
                 src += (y - MaskSize) * src_img.Width + x;
                 for (int yy = 0; yy < n; ++yy, src += src_img.Width) {
                     --Bucket[*src];

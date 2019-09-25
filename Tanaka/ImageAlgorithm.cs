@@ -41,20 +41,13 @@ public class ImageAlgorithm {
             UselessXColumSpacingDeletion(in f);//空白列削除
             UselessYRowSpacingDeletion(in f);//空白行削除
         }
-        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage InputGrayImage = Cv.LoadImage(f, LoadMode.GrayScale);
-        Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size, BitDepth.U8, 1);
+        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);
         MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
-        int Channel = Image.GetHistgramR(in f, ref Histgram);//GetImageToneValue(f, out int Channel, out Histgram);
-        /*System.Windows.MessageBox.Show(Histgram.Max().ToString() + Histgram.Min().ToString());
-        if (Histgram.Max() == Histgram.Min()) {//最大値と最小値が同じなら豆腐か黒塗り．つまり処理不要，手動で削除しとけ
-            System.Windows.MessageBox.Show(Histgram.Max().ToString() + Histgram.Min().ToString());
-            InputGrayImage.Dispose();
-            LaplacianImage.Dispose();
-            return false;
-        }/**/
+        int Channel = Image.GetHistgramR(in f, ref Histgram);
         Threshold ImageThreshold = new Threshold {
-            Concentration = ImageAlgorithm.GetConcentrationThreshold(in Histgram, ImageAlgorithm.GetMangaTextConst(StandardModeIsChecked))//勾配が重要？
+            Concentration = ImageAlgorithm.GetConcentrationThreshold(in Histgram, StandardModeIsChecked)//勾配が重要？
         };
         ImageRect NewImageRect = new ImageRect();
         if (!ImageAlgorithm.GetNewImageSize(LaplacianImage, ImageThreshold, NewImageRect)) {
@@ -64,36 +57,29 @@ public class ImageAlgorithm {
         }
         LaplacianImage.Dispose();
         writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + " threshold=" + ImageThreshold.Concentration + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());
-        Mat OutputCutImage;//IplImage OutputCutImage = Cv.CreateImage(NewImageRect.Size, BitDepth.U8, Channel);
+        Mat OutputCutImage;
         if (Channel == Image.Is.GrayScale) {
-            OutputCutImage = InputGrayImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));//WhiteCut(InputGrayImage, OutputCutImage, NewImageRect);
+            OutputCutImage = InputGrayImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));
             InputGrayImage.Dispose();
             Image.LinearStretch(OutputCutImage, Histgram.Max(), Histgram.Min());// 階調値変換
         } else {//Is.Color
             InputGrayImage.Dispose();
-            Mat InputColorImage = Cv2.ImRead(f, ImreadModes.Color);//IplImage InputGrayImage = Cv.LoadImage(f, LoadMode.GrayScale);
-            OutputCutImage = InputColorImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));//WhiteCut(InputGrayImage, OutputCutImage,
+            Mat InputColorImage = Cv2.ImRead(f, ImreadModes.Color);
+            OutputCutImage = InputColorImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));
             InputColorImage.Dispose();
         }
-        Cv2.ImWrite(f, OutputCutImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));//Cv.SaveImage(f, OutputCutImage, new ImageEncodingParam(ImageEncodingID.PngCompression, 0));
+        Cv2.ImWrite(f, OutputCutImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         OutputCutImage.Dispose();
         return true;
     }
     private static bool CutJPGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
-        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage InputGrayImage = Cv.LoadImage(f, LoadMode.GrayScale);//
-        Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size, BitDepth.U8, 1);
+        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);
         ImageAlgorithm.MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
-        _ = Image.GetHistgramR(in f, ref Histgram);//GetImageToneValue(f, out int Channel, out Histgram);
-        /*System.Windows.MessageBox.Show(Histgram.Max().ToString() + "        ff " + Histgram.Min().ToString());
-        if (Histgram.Max() == Histgram.Min()) {//最大値と最小値が同じなら豆腐か黒塗り．つまり処理不要，手動で削除しとけ
-            InputGrayImage.Dispose();
-            LaplacianImage.Dispose();
-            return false;
-        }/*-*/
-        //
+        _ = Image.GetHistgramR(in f, ref Histgram);
         ImageRect NewImageRect = new ImageRect();
-        if (!GetNewImageSize(LaplacianImage, new Threshold { Concentration = GetConcentrationThreshold(in Histgram, GetMangaTextConst(StandardModeIsChecked)) }, NewImageRect)) {
+        if (!GetNewImageSize(LaplacianImage, new Threshold { Concentration = GetConcentrationThreshold(in Histgram, StandardModeIsChecked) }, NewImageRect)) {
             InputGrayImage.Dispose();
             LaplacianImage.Dispose();
             return false;
@@ -132,8 +118,8 @@ public class ImageAlgorithm {
             }
         }
     }
-    private static byte GetConcentrationThreshold(in byte[] Histgram, double MangaTextConst) {
-        return (byte)((Histgram.Max() - Histgram.Min()) * MangaTextConst / Image.Const.Tone8Bit);
+    private static byte GetConcentrationThreshold(in byte[] Histgram, bool StandardModeIsChecked) {
+        return (byte)((Histgram.Max() - Histgram.Min()) * GetMangaTextConst(StandardModeIsChecked) / Image.Const.Tone8Bit);
     }
     private static double GetMangaTextConst(bool StandardModeIsChecked) {//図表がマンガ 小説がText それぞれ画像密度が違うので 閾値を変更したい、
         if (StandardModeIsChecked) {//故にこの定数を使って閾値を変える
@@ -149,27 +135,25 @@ public class ImageAlgorithm {
         return StandardAlgorithm.Math.MakeItOdd((int)System.Math.Sqrt(System.Math.Sqrt(GetShortSide(p_img) + 80)));//短辺+80の四乗根
     }
     private static bool MedianLaplacianMedian(bool StandardModeIsChecked, bool StrongestModeIsChecked, Mat InputGrayImage, Mat LaplacianImage) {
-        //Mat MedianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);// IplImage MedianImage = Cv.CreateImage(InputGrayImage.Size, BitDepth.U8, 1);
-        Mat MedianImage = new Mat();// IplImage MedianImage = Cv.CreateImage(InputGrayImage.Size, BitDepth.U8, 1);
+        Mat MedianImage = new Mat();
         if (StandardModeIsChecked) {
-            MedianImage = InputGrayImage.Clone();//Cv.Copy(InputGrayImage, MedianImage);//小説Textはメディアンフィルタ適用外
+            MedianImage = InputGrayImage.Clone();//小説Textはメディアンフィルタ適用外
         } else {//図表マンガ メディアンフィルタ実行 画像サイズに応じてマスクサイズを決める
             Cv2.MedianBlur(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
             //Image.FastestMedian(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
         }
-        Cv2.Laplacian(MedianImage, LaplacianImage, MatType.CV_8U);//Cv.Laplace(MedianImage, LaplacianImage, ApertureSize.Size1);
+        Cv2.Laplacian(MedianImage, LaplacianImage, MatType.CV_8U);
 #if (DEBUG_SAVE)
 #endif
 #if (DEBUG_DISPLAY)
 #endif
-        if (StandardModeIsChecked) {
-            //Image.Filter.FastestMedian(LaplacianImage, 0);//小説Textはメディアンフィルタ適用外
+        if (StandardModeIsChecked) {//小説Textはメディアンフィルタ適用外
         } else {//図表マンガ メディアンフィルタ実行 画像サイズに応じてマスクサイズを決める
-            Cv2.MedianBlur(LaplacianImage, LaplacianImage, 3);//Image.Filter.FastestMedian(LaplacianImage, GetRangeMedianF(LaplacianImage));
+            Cv2.MedianBlur(LaplacianImage, LaplacianImage, 3);
         }
         if (StrongestModeIsChecked) {//StrongModeではオ－プニング処理を追加し，ゴミ微小領域を消滅する
-            Mat element = Cv2.GetStructuringElement(MorphShapes.Cross, new OpenCvSharp.Size(3, 3), new OpenCvSharp.Point(1, 1));//IplConvKernel element = Cv.CreateStructuringElementEx(3, 3, 1, 1, ElementShape.Rect, null);
-            Cv2.MorphologyEx(LaplacianImage, LaplacianImage, MorphTypes‎.Open, element, null, 1, BorderTypes‎.Reflect);//Cv.MorphologyEx(LaplacianImage, LaplacianImage, MedianImage, element, MorphologyOperation.Open, 1);//input output temp 矩形,種類,回数
+            Mat element = Cv2.GetStructuringElement(MorphShapes.Cross, new OpenCvSharp.Size(3, 3), new OpenCvSharp.Point(1, 1));
+            Cv2.MorphologyEx(LaplacianImage, LaplacianImage, MorphTypes‎.Open, element, null, 1, BorderTypes‎.Reflect);//input output,種類, 矩形,端部処理
             element.Dispose();
         }
         MedianImage.Dispose();/*-*/
@@ -193,9 +177,9 @@ public class ImageAlgorithm {
         }
     }
     private static unsafe void NoiseRemoveTwoArea(in string f, byte max) {
-        Mat p_img = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage p_img = Cv.LoadImage(f,LoadMode.GrayScale);
-        Mat q_img = p_img.Clone();//IplImage q_img = Cv.CreateImage(p_img.Size,BitDepth.U8,1);//Cv.Copy(p_img,q_img);
-        byte* p = p_img.DataPointer; byte* q = q_img.DataPointer;//byte* p = (byte*)p_img.ImageData, q = (byte*)q_img.ImageData;
+        Mat p_img = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat q_img = p_img.Clone();
+        byte* p = p_img.DataPointer; byte* q = q_img.DataPointer;
         for (int y = 0; y < q_img.Height * q_img.Width; ++y)
             q[y] = q[y] < max ? (byte)0 : (byte)255;//First, binarize
         for (int y = 1; y < q_img.Height - 1; ++y) {
@@ -230,15 +214,15 @@ public class ImageAlgorithm {
                     p[yoffset + x] = max;//Independent
             }
         }
-        Cv2.ImWrite(f, p_img, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));//Cv.SaveImage(f,p_img,new ImageEncodingParam(ImageEncodingID.PngCompression,0));
+        Cv2.ImWrite(f, p_img, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         //ShowImage(nameof(p_img),p_img);
         q_img.Dispose();
         p_img.Dispose();
     }
     private static unsafe void NoiseRemoveWhite(in string f, byte min) {
-        Mat p_img = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage p_img = Cv.LoadImage(f,LoadMode.GrayScale);
-        Mat q_img = p_img.Clone();//IplImage q_img = Cv.CreateImage(p_img.Size,BitDepth.U8,1);//Cv.Copy(p_img,q_img);
-        byte* p = p_img.DataPointer; byte* q = q_img.DataPointer;//byte* p = (byte*)p_img.ImageData, q = (byte*)q_img.ImageData;
+        Mat p_img = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat q_img = p_img.Clone();
+        byte* p = p_img.DataPointer; byte* q = q_img.DataPointer;
         for (int y = 0; y < q_img.Height * q_img.Width; ++y)
             q[y] = p[y] > min ? (byte)255 : (byte)0;//First, binarize
         for (int y = 1; y < q_img.Height - 1; ++y) {
@@ -272,7 +256,7 @@ public class ImageAlgorithm {
                     p[yoffset + x] = min;//Independent
             }
         }
-        Cv2.ImWrite(f, p_img, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));//Cv.SaveImage(f,p_img,new ImageEncodingParam(ImageEncodingID.PngCompression,0));
+        Cv2.ImWrite(f, p_img, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         q_img.Dispose();
         p_img.Dispose();
     }
@@ -287,11 +271,10 @@ public class ImageAlgorithm {
         return NewHeightWidth;
     }
     private static unsafe bool UselessYRowSpacingDeletion(in string f) {
-        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage InputGrayImage = Cv.LoadImage(f,LoadMode.GrayScale);//
-        Mat LaplacianImage = new Mat();//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size,BitDepth.U8,1);
-        Cv2.Laplacian(InputGrayImage, LaplacianImage, InputGrayImage.Depth());//Cv.Laplace(InputGrayImage,LaplacianImage,ApertureSize.Size1);
-        //System.Windows.MessageBox.Show(f);
-        byte* p = LaplacianImage.DataPointer;//byte* p = (byte*)LaplacianImage.ImageData;
+        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat LaplacianImage = new Mat();
+        Cv2.Laplacian(InputGrayImage, LaplacianImage, InputGrayImage.Depth());
+        byte* p = LaplacianImage.DataPointer;
         int[] TargetYRow = new int[LaplacianImage.Height];//TargetYRow[y]が閾値以下ならその行を削除
         for (int y = 0; y < LaplacianImage.Height; y++)
             for (int x = 0; x < LaplacianImage.Width; x++)
@@ -301,8 +284,6 @@ public class ImageAlgorithm {
         int InstanceThreshold = 0;
         Mat OutputCutImage = new Mat(GetNewHeightWidth(TargetYRow, LaplacianImage.Height, InstanceThreshold), InputGrayImage.Width, InputGrayImage.Depth(), Image.Is.GrayScale);
 
-        //IplImage OutputCutImage = Cv.CreateImage(new CvSize(InputGrayImage.Width,GetNewHeightWidth(TargetYRow,LaplacianImage.Height,InstanceThreshold)),BitDepth.U8,Is.GrayScale);
-        //byte* src = (byte*)InputGrayImage.ImageData, dst = (byte*)OutputCutImage.ImageData;
         byte* src = InputGrayImage.DataPointer; byte* dst = OutputCutImage.DataPointer;
         for (int x = 0; x < InputGrayImage.Width; x++) {
             int ValidYs = 0;//有効なYの数
@@ -313,17 +294,17 @@ public class ImageAlgorithm {
                 }
             }
         }
-        Cv2.ImWrite(f, OutputCutImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));//Cv.SaveImage(f,OutputCutImage,new ImageEncodingParam(ImageEncodingID.PngCompression,0));
+        Cv2.ImWrite(f, OutputCutImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         InputGrayImage.Dispose();
         LaplacianImage.Dispose();
         OutputCutImage.Dispose();
         return true;
     }
     private static unsafe bool UselessXColumSpacingDeletion(in string f) {
-        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage InputGrayImage = Cv.LoadImage(f,LoadMode.GrayScale);//
-        Mat LaplacianImage = new Mat();//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size,BitDepth.U8,1);
-        Cv2.Laplacian(InputGrayImage, LaplacianImage, MatType.CV_8U);//Cv.Laplace(InputGrayImage,LaplacianImage,ApertureSize.Size1);
-        byte* p = LaplacianImage.DataPointer;//byte* p = (byte*)LaplacianImage.ImageData;
+        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat LaplacianImage = new Mat();
+        Cv2.Laplacian(InputGrayImage, LaplacianImage, MatType.CV_8U);
+        byte* p = LaplacianImage.DataPointer;
         int[] TargetXColumn = new int[LaplacianImage.Width];//TargetRow[x]が閾値以下ならその行を削除
         for (int y = 0; y < LaplacianImage.Height; y++)
             for (int x = 0; x < LaplacianImage.Width; x++)
@@ -332,8 +313,7 @@ public class ImageAlgorithm {
                 }
         int InstanceThreshold = 0;
         Mat OutputCutImage = new Mat(InputGrayImage.Height, GetNewHeightWidth(TargetXColumn, LaplacianImage.Width, InstanceThreshold), MatType.CV_8U, Image.Is.GrayScale);
-        //IplImage OutputCutImage = Cv.CreateImage(new CvSize(GetNewHeightWidth(TargetXColumn,LaplacianImage.Width,InstanceThreshold),InputGrayImage.Height),BitDepth.U8,Is.GrayScale);
-        byte* src = InputGrayImage.DataPointer; byte* dst = OutputCutImage.DataPointer;//byte* src = (byte*)InputGrayImage.ImageData, dst = (byte*)OutputCutImage.ImageData;
+        byte* src = InputGrayImage.DataPointer; byte* dst = OutputCutImage.DataPointer;
         for (int y = 0; y < InputGrayImage.Height; y++) {
             int ValidXs = 0;//有効なXの数
             for (int x = 0; x < InputGrayImage.Width; x++) {
@@ -343,17 +323,15 @@ public class ImageAlgorithm {
                 }
             }
         }
-        Cv2.ImWrite(f, OutputCutImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));//Cv.SaveImage(f,OutputCutImage,new ImageEncodingParam(ImageEncodingID.PngCompression,0));
+        Cv2.ImWrite(f, OutputCutImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         InputGrayImage.Dispose();
         LaplacianImage.Dispose();
         OutputCutImage.Dispose();
         return true;
     }
     private static unsafe bool FixPixelMissing(in string f) {
-        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale); //IplImage InputGrayImage = Cv.LoadImage(f, LoadMode.GrayScale);//
-        Mat FixedImage = InputGrayImage.Clone();//IplImage FixedImage = Cv.CreateImage(InputGrayImage.Size, BitDepth.U8, 1);//Cv.Copy(InputGrayImage, FixedImage);
-        //byte* src = (byte*)InputGrayImage.ImageData, dst = (byte*)FixedImage.ImageData;
-        //http://ni4muraano.hatenablog.com/entry/2017/04/22/161633
+        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+        Mat FixedImage = InputGrayImage.Clone();
         byte* src = InputGrayImage.DataPointer; byte* dst = FixedImage.DataPointer;
         for (int y = 2; y < InputGrayImage.Height - 2; ++y) {
             int yoffset = InputGrayImage.Cols * y;
@@ -364,18 +342,6 @@ public class ImageAlgorithm {
                     dst[offset] = (NeighborValue);
             }
         }
-
-        //byte* src = (byte*)InputGrayImage.ImageData, dst = (byte*)FixedImage.ImageData;
-        //for (int y = 2; y < InputGrayImage.Height - 2; ++y) {
-        //  for (int x = 2; x < InputGrayImage.Width - 2; ++x) {
-        //  int offset = (InputGrayImage.Width * y) + x;//current position
-        //     if (((src[offset - 1]) == (src[offset + 1])) && ((src[offset + 1]) == (src[offset - InputGrayImage.Width])) && ((src[offset + 1]) == (src[offset - InputGrayImage.Width])) && ((src[offset - 2]) == (src[offset + 1])) && ((src[offset + 2]) == (src[offset + 1])) && ((src[offset - 2 * InputGrayImage.Width]) == (src[offset + 1])) && ((src[offset + 2 * InputGrayImage.Width]) == (src[offset + 1])))
-        //        dst[offset] = (src[offset + 1]);
-        // }
-        // }
-        //Cv.SaveImage(f, FixedImage, new ImageEncodingParam(ImageEncodingID.PngCompression, 0));
-        //https://docs.opencv.org/4.0.1/d4/da8/group__imgcodecs.html#ga292d81be8d76901bff7988d18d2b42ac
-        //http://ni4muraano.hatenablog.com/entry/2017/11/20/190000
         Cv2.ImWrite(f, FixedImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         FixedImage.Dispose();
         InputGrayImage.Dispose();

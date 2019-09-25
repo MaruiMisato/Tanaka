@@ -23,7 +23,7 @@ public class EntryPoint {
                     ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, PathName);
                 }
                 if ((bool)ConfMainWindow.PNGout.IsChecked)
-                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in PathName); //ImageAlgorithm.ExecutePNGout(ConfMainWindow,in PathName);
+                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in PathName);
                 ImageAlgorithm.CarmineCliAuto(in PathName);
                 FilesSize[1] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
                 DiplayFilesSize(ConfMainWindow, FilesSize);
