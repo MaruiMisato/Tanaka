@@ -35,7 +35,7 @@ public class EntryPoint {
                 if ((bool)ConfMainWindow.MarginRemove.IsChecked)
                     ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, NewPath);//該当ファイルのあるフォルダの奴はすべて実行される別フォルダに単体コピーが理想*/
                 if ((bool)ConfMainWindow.PNGout.IsChecked)
-                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in PathName);
+                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in NewPath);
                 ImageAlgorithm.CarmineCliAuto(in NewPath);
             }
         }
