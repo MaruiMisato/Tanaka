@@ -17,8 +17,7 @@ public class ImageAlgorithm {
         Cv2.WaitKey(0);
         Cv2.DestroyAllWindows();
     }
-    public class ImageRect//画像固有の値だからstaicではない
-    {
+    public class ImageRect {//画像固有の値だからstaicではない
         public int YLow { get; set; }
         public int XLow { get; set; }
         public int YHigh { get; set; }
@@ -26,14 +25,12 @@ public class ImageAlgorithm {
         public int Height { get; set; }//YHigh-YLow
         public int Width { get; set; }//XHigh-XLow
     }
-    public class Threshold//画像固有の値だからstaicではない
-    {
+    public class Threshold {//画像固有の値だからstaicではない
         public byte Concentration { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
         public int Times { get; } = 3;
     }
-
     private static bool CutPNGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
         byte[] OriginHistgram = new byte[Image.Const.Tone8Bit];
         if (Image.GetHistgramR(in f, ref OriginHistgram) == Image.Is.Color) {//カラーでドット埋めは無理
@@ -49,12 +46,13 @@ public class ImageAlgorithm {
         MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
         int Channel = Image.GetHistgramR(in f, ref Histgram);//GetImageToneValue(f, out int Channel, out Histgram);
+        /*System.Windows.MessageBox.Show(Histgram.Max().ToString() + Histgram.Min().ToString());
         if (Histgram.Max() == Histgram.Min()) {//最大値と最小値が同じなら豆腐か黒塗り．つまり処理不要，手動で削除しとけ
             System.Windows.MessageBox.Show(Histgram.Max().ToString() + Histgram.Min().ToString());
             InputGrayImage.Dispose();
             LaplacianImage.Dispose();
             return false;
-        }
+        }/**/
         Threshold ImageThreshold = new Threshold {
             Concentration = ImageAlgorithm.GetConcentrationThreshold(in Histgram, ImageAlgorithm.GetMangaTextConst(StandardModeIsChecked))//勾配が重要？
         };
@@ -72,6 +70,7 @@ public class ImageAlgorithm {
             InputGrayImage.Dispose();
             Image.LinearStretch(OutputCutImage, Histgram.Max(), Histgram.Min());// 階調値変換
         } else {//Is.Color
+            InputGrayImage.Dispose();
             Mat InputColorImage = Cv2.ImRead(f, ImreadModes.Color);//IplImage InputGrayImage = Cv.LoadImage(f, LoadMode.GrayScale);
             OutputCutImage = InputColorImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));//WhiteCut(InputGrayImage, OutputCutImage,
             InputColorImage.Dispose();
@@ -86,11 +85,12 @@ public class ImageAlgorithm {
         ImageAlgorithm.MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
         _ = Image.GetHistgramR(in f, ref Histgram);//GetImageToneValue(f, out int Channel, out Histgram);
+        /*System.Windows.MessageBox.Show(Histgram.Max().ToString() + "        ff " + Histgram.Min().ToString());
         if (Histgram.Max() == Histgram.Min()) {//最大値と最小値が同じなら豆腐か黒塗り．つまり処理不要，手動で削除しとけ
             InputGrayImage.Dispose();
             LaplacianImage.Dispose();
             return false;
-        }
+        }/*-*/
         //
         ImageRect NewImageRect = new ImageRect();
         if (!GetNewImageSize(LaplacianImage, new Threshold { Concentration = GetConcentrationThreshold(in Histgram, GetMangaTextConst(StandardModeIsChecked)) }, NewImageRect)) {
@@ -115,7 +115,6 @@ public class ImageAlgorithm {
                 sw.Start();
                 Parallel.ForEach(PNGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {//Specify the number of concurrent threads(The number of cores is reasonable).
                     CutPNGMarginMain(StandardModeIsChecked, StrongestModeIsChecked, in f, writerSync);
-
                 });
                 writerSync.WriteLine(DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss"));
                 sw.Stop();
@@ -291,7 +290,7 @@ public class ImageAlgorithm {
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);//IplImage InputGrayImage = Cv.LoadImage(f,LoadMode.GrayScale);//
         Mat LaplacianImage = new Mat();//IplImage LaplacianImage = Cv.CreateImage(InputGrayImage.Size,BitDepth.U8,1);
         Cv2.Laplacian(InputGrayImage, LaplacianImage, InputGrayImage.Depth());//Cv.Laplace(InputGrayImage,LaplacianImage,ApertureSize.Size1);
-        System.Windows.MessageBox.Show(f);
+        //System.Windows.MessageBox.Show(f);
         byte* p = LaplacianImage.DataPointer;//byte* p = (byte*)LaplacianImage.ImageData;
         int[] TargetYRow = new int[LaplacianImage.Height];//TargetYRow[y]が閾値以下ならその行を削除
         for (int y = 0; y < LaplacianImage.Height; y++)
@@ -299,7 +298,6 @@ public class ImageAlgorithm {
                 if (p[LaplacianImage.Width * y + x] > 0) {
                     ++TargetYRow[y];
                 }
-        System.Windows.MessageBox.Show(f);
         int InstanceThreshold = 0;
         Mat OutputCutImage = new Mat(GetNewHeightWidth(TargetYRow, LaplacianImage.Height, InstanceThreshold), InputGrayImage.Width, InputGrayImage.Depth(), Image.Is.GrayScale);
 

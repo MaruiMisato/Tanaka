@@ -16,23 +16,12 @@ public class Image {
     }
     public static int GetHistgramR(in string f, ref byte[] Histgram) {//ここでグレーかカラーか判定
         int Channel = Is.GrayScale;//1:gray,3:bgr color
-        //var bitmapimageOriginal = new BitmapImage(new Uri(f));
-
-        //占有しないパターン-1http://neareal.net/index.php?Programming%2F.NetFramework%2FWPF%2FWriteableBitmap%2FLoadReleaseableBitmapImage
         System.IO.MemoryStream data = new System.IO.MemoryStream(File.ReadAllBytes(f));
         WriteableBitmap wbmp = new WriteableBitmap(BitmapFrame.Create(data));
         data.Close();
-        // BitmapImageのPixelFormatをPbgra32に変換する
-        FormatConvertedBitmap bitmap = new FormatConvertedBitmap(wbmp, PixelFormats.Pbgra32, null, 0);//32bit で読む
-
-        // 画像の大きさに従った配列を作る
-        byte[] originalPixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
-
-        // BitmapSourceから配列にコピー
-        //https://water2litter.net/gin/?p=990
-        //https://imagingsolution.net/program/csharp/bitmap-data-memory-format/
-        int stride = (bitmap.PixelWidth * bitmap.Format.BitsPerPixel + 7) / 8;
-        bitmap.CopyPixels(originalPixels, stride, 0);
+        FormatConvertedBitmap bitmap = new FormatConvertedBitmap(wbmp, PixelFormats.Pbgra32, null, 0);// BitmapImageのPixelFormatをPbgra32に変換する
+        byte[] originalPixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];// 画像の大きさに従った配列を作る
+        bitmap.CopyPixels(originalPixels, (bitmap.PixelWidth * bitmap.Format.BitsPerPixel + 7) / 8, 0); // BitmapSourceから配列にコピー
 
         for (int i = 0; i < originalPixels.Length; i += 4) {
             if (Channel == Is.Color || originalPixels[i] != originalPixels[i + 1] || originalPixels[i + 2] != originalPixels[i]) {//Color images are not executed.
@@ -41,7 +30,6 @@ public class Image {
             } else
                 Histgram[originalPixels[i]]++;
         }
-
         System.GC.Collect();
         return Channel;
     }
