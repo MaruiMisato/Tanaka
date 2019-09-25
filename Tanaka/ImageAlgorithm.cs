@@ -44,7 +44,7 @@ public class ImageAlgorithm {
             UselessYRowSpacingDeletion(in f);//空白行削除
         }
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
-        Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);
+        Mat LaplacianImage = new Mat();
         MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
         int Channel = Image.GetHistgramR(in f, ref Histgram);
@@ -76,7 +76,7 @@ public class ImageAlgorithm {
     }
     private static bool CutJPGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
-        Mat LaplacianImage = new Mat(InputGrayImage.Height, InputGrayImage.Width, MatType.CV_8U);
+        Mat LaplacianImage = new Mat();
         ImageAlgorithm.MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
         _ = Image.GetHistgramR(in f, ref Histgram);
@@ -126,27 +126,22 @@ public class ImageAlgorithm {
     private static double GetMangaTextConst(bool StandardModeIsChecked) {//図表がマンガ 小説がText それぞれ画像密度が違うので 閾値を変更したい、
         return StandardModeIsChecked ? Cleanliness.Clean : Cleanliness.Dirty;//Clean:小説Text,Dirty:図表マンガ 25=256*10%
     }
-    public static int GetShortSide(Mat p_img) {
+    public static int GetShortSide(Mat p_img) {//辺の長い方を取得
         return p_img.Width > p_img.Height ? p_img.Width : p_img.Height;
     }
     private static int GetRangeMedianF(Mat p_img) {
         return StandardAlgorithm.Math.MakeItOdd((int)System.Math.Sqrt(System.Math.Sqrt(GetShortSide(p_img) + 80)));//短辺+80の四乗根
     }
-    private static bool MedianLaplacianMedian(bool StandardModeIsChecked, bool StrongestModeIsChecked, Mat InputGrayImage, Mat LaplacianImage) {
-        Mat MedianImage = new Mat();
+    private static void MedianLaplacianMedian(bool StandardModeIsChecked, bool StrongestModeIsChecked, Mat InputGrayImage, Mat LaplacianImage) {
         if (StandardModeIsChecked) {
-            MedianImage = InputGrayImage.Clone();//小説Textはメディアンフィルタ適用外
+            Cv2.Laplacian(InputGrayImage, LaplacianImage, MatType.CV_8U);
+            return;
         } else {//図表マンガ メディアンフィルタ実行 画像サイズに応じてマスクサイズを決める
+            Mat MedianImage = new Mat();
             Cv2.MedianBlur(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
             //Image.FastestMedian(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
-        }
-        Cv2.Laplacian(MedianImage, LaplacianImage, MatType.CV_8U);
-#if (DEBUG_SAVE)
-#endif
-#if (DEBUG_DISPLAY)
-#endif
-        if (StandardModeIsChecked) {//小説Textはメディアンフィルタ適用外
-        } else {//図表マンガ メディアンフィルタ実行 画像サイズに応じてマスクサイズを決める
+            Cv2.Laplacian(MedianImage, LaplacianImage, MatType.CV_8U);
+            MedianImage.Dispose();
             Cv2.MedianBlur(LaplacianImage, LaplacianImage, 3);
         }
         if (StrongestModeIsChecked) {//StrongModeではオ－プニング処理を追加し，ゴミ微小領域を消滅する
@@ -154,8 +149,6 @@ public class ImageAlgorithm {
             Cv2.MorphologyEx(LaplacianImage, LaplacianImage, MorphTypes‎.Open, element, null, 1, BorderTypes‎.Reflect);//input output,種類, 矩形,端部処理
             element.Dispose();
         }
-        MedianImage.Dispose();/*-*/
-        return true;
     }
     public static void CarmineCliAuto(in string PathName) {//ハフマンテーブルの最適化によってjpgサイズを縮小
         IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*.jpg", System.IO.SearchOption.AllDirectories);//Acquire only jpg files under the path.
