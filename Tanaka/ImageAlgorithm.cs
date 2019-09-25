@@ -7,6 +7,10 @@ using System;
 using System.IO;
 
 public class ImageAlgorithm {
+    static class Cleanliness {
+        public const int Clean = 15;//小説Text
+        public const int Dirty = 25;//図表マンガ 25
+    }
     static class Var {//配列の宣言で使うことが多い 不変普遍定数ではない　ユーザが勝手に変えろ
         public const int MaxMarginSize = 4;//実際は＋1
     }
@@ -120,11 +124,7 @@ public class ImageAlgorithm {
         return (byte)((Histgram.Max() - Histgram.Min()) * GetMangaTextConst(StandardModeIsChecked) / Image.Const.Tone8Bit);
     }
     private static double GetMangaTextConst(bool StandardModeIsChecked) {//図表がマンガ 小説がText それぞれ画像密度が違うので 閾値を変更したい、
-        if (StandardModeIsChecked) {//故にこの定数を使って閾値を変える
-            return 15;//小説Text
-        } else {
-            return 25;//図表マンガ 25=256*10%
-        }
+        return StandardModeIsChecked ? Cleanliness.Clean : Cleanliness.Dirty;//Clean:小説Text,Dirty:図表マンガ 25=256*10%
     }
     public static int GetShortSide(Mat p_img) {
         return p_img.Width > p_img.Height ? p_img.Width : p_img.Height;
