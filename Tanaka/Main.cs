@@ -4,10 +4,9 @@ using System.Linq;//enum
 using System.Collections.Generic;//enum
 using System.Text.RegularExpressions;//正規表現
 using Tanaka;
-using System.Threading.Tasks;
 
 public class EntryPoint {
-    public void FileOrFolderAsync(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
+    public void FileOrFolder(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
         foreach (string PathName in filespath) {//Enumerate acquired paths
             ConfMainWindow.FolderLog.Text += "\n" + PathName;
             ConfMainWindow.FilesLog.Text += "\n" + PathName;//Show path

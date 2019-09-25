@@ -3,9 +3,7 @@ using System.Linq;//enum
 using System.Collections.Generic;//enum
 using Tanaka;
 using OpenCvSharp;
-using System.Windows.Media;
 using System;
-using System.Windows.Media.Imaging;
 using System.IO;
 
 public class ImageAlgorithm {
