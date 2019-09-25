@@ -6,60 +6,55 @@ using System.Text.RegularExpressions;//正規表現
 using Tanaka;
 using System.Threading.Tasks;
 
-public class EntryPoint
-{
-    public void FileOrFolderAsync(MainWindow ConfMainWindow,System.Collections.Specialized.StringCollection filespath)
-    {
+public class EntryPoint {
+    public void FileOrFolderAsync(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
         foreach (string PathName in filespath) {//Enumerate acquired paths
-            ConfMainWindow.FolderLog.Text +="\n"+PathName;
-            ConfMainWindow.FilesLog.Text +="\n"+PathName;//Show path
+            ConfMainWindow.FolderLog.Text += "\n" + PathName;
+            ConfMainWindow.FilesLog.Text += "\n" + PathName;//Show path
             if (File.GetAttributes(PathName).HasFlag(FileAttributes.Directory)) {//フォルダ //JudgeFileOrDirectory
                 IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*", System.IO.SearchOption.TopDirectoryOnly);//Acquire  files  the path.
                 string[] AllOldFileName = new string[files.Count()];//36*25+100 ファイル数 ゴミ込み
                 if ((bool)ConfMainWindow.ExecutFilesRename.IsChecked)//リネームするか？
-                    if (!FilesRename.RenameFiles(ConfMainWindow,PathName, files, AllOldFileName))
+                    if (!FilesRename.RenameFiles(ConfMainWindow, PathName, files, AllOldFileName))
                         return;//リネーム失敗
                 long[] FilesSize = new long[2];
                 FilesSize[0] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
                 if ((bool)ConfMainWindow.MarginRemove.IsChecked) {
-                    ImageAlgorithm.RemoveMarginEntry(ConfMainWindow,PathName);
+                    ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, PathName);
                 }
                 if ((bool)ConfMainWindow.PNGout.IsChecked)
-                    ImageAlgorithm.ExecutePNGout(ConfMainWindow,in PathName); //ImageAlgorithm.ExecutePNGout(ConfMainWindow,in PathName);
+                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in PathName); //ImageAlgorithm.ExecutePNGout(ConfMainWindow,in PathName);
                 ImageAlgorithm.CarmineCliAuto(in PathName);
                 FilesSize[1] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
-                DiplayFilesSize(ConfMainWindow,FilesSize);
+                DiplayFilesSize(ConfMainWindow, FilesSize);
                 if (!(bool)ConfMainWindow.NotArchive.IsChecked)
-                    CreateZip(ConfMainWindow,PathName);
+                    CreateZip(ConfMainWindow, PathName);
             } else {//ファイルはnewをつくりそこで実行
                 string NewPath = System.IO.Path.GetDirectoryName(PathName) + "\\new\\";
                 System.IO.Directory.CreateDirectory(NewPath);//"\\new"
                 System.IO.File.Copy(PathName, NewPath + Path.GetFileName(PathName), true);//"\\new\\hoge.jpg"
                 if ((bool)ConfMainWindow.MarginRemove.IsChecked)
-                    ImageAlgorithm.RemoveMarginEntry(ConfMainWindow,NewPath);//該当ファイルのあるフォルダの奴はすべて実行される別フォルダに単体コピーが理想*/
+                    ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, NewPath);//該当ファイルのあるフォルダの奴はすべて実行される別フォルダに単体コピーが理想*/
                 if ((bool)ConfMainWindow.PNGout.IsChecked)
-                    ImageAlgorithm.ExecutePNGout(ConfMainWindow,in PathName);
+                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in PathName);
                 ImageAlgorithm.CarmineCliAuto(in NewPath);
             }
         }
         CompressLogsWith7z(ConfMainWindow);
     }
-    private void CompressLogsWith7z(MainWindow ConfMainWindow)
-    {
-        using(TextWriter writerSync = TextWriter.Synchronized(new StreamWriter(DateTime.Now.ToString("HH.mm.ss")+".log",false,System.Text.Encoding.GetEncoding("shift_jis")))) {
+    private void CompressLogsWith7z(MainWindow ConfMainWindow) {
+        using (TextWriter writerSync = TextWriter.Synchronized(new StreamWriter(DateTime.Now.ToString("HH.mm.ss") + ".log", false, System.Text.Encoding.GetEncoding("shift_jis")))) {
             writerSync.WriteLine(ConfMainWindow.FolderLog.Text);
             writerSync.WriteLine(ConfMainWindow.FilesLog.Text);//richTextBox1
         }
-        StandardAlgorithm.ExecuteAnotherApp("7z.exe","a "+DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")+".7z *.log -sdel -mx9",false,true);
+        StandardAlgorithm.ExecuteAnotherApp("7z.exe", "a " + DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + ".7z *.log -sdel -mx9", false, true);
     }
-    private void DiplayFilesSize(MainWindow ConfMainWindow,long[] FilesSize)
-    {
-        ConfMainWindow.FolderLog.Text +="BeforeFileSize:"+ FilesSize[0] +" Byte\n";
+    private void DiplayFilesSize(MainWindow ConfMainWindow, long[] FilesSize) {
+        ConfMainWindow.FolderLog.Text += "BeforeFileSize:" + FilesSize[0] + " Byte\n";
         ConfMainWindow.FolderLog.Text += "AfterFilesaize:" + FilesSize[1] + " Byte";//Magnification
         ConfMainWindow.FolderLog.Text += "\nMagnification:" + ((double)FilesSize[1] / FilesSize[0]) * 100 + " %";
     }
-    private void CreateZip(MainWindow ConfMainWindow,string PathName)
-    {
+    private void CreateZip(MainWindow ConfMainWindow, string PathName) {
         string Extension = ".zip";
         string FileName = "Rar.exe";
         string Arguments;
@@ -86,11 +81,10 @@ public class EntryPoint
             Arguments = "a \"" + PathName + Extension + "\" -mmt=on" + CompressLevel + "\"" + PathName + "\\*\"";
         }
         StandardAlgorithm.ExecuteAnotherApp(in FileName, in Arguments, false, true);
-        RenameNumberOnlyFile(ConfMainWindow,PathName, Extension);
+        RenameNumberOnlyFile(ConfMainWindow, PathName, Extension);
 
     }
-    private string GetNumberOnlyPath(string PathName)
-    {//ファイル名からX巻のXのみを返す
+    private string GetNumberOnlyPath(string PathName) {//ファイル名からX巻のXのみを返す
         string FileName = System.IO.Path.GetFileName(PathName);//Z:\[宮下英樹] センゴク権兵衛 第05巻 ->[宮下英樹] センゴク権兵衛 第05巻
         Match MatchedNumber = Regex.Match(FileName, "(\\d)+巻");//[宮下英樹] センゴク権兵衛 第05巻 ->05巻
         if (MatchedNumber.Success)
@@ -103,12 +97,11 @@ public class EntryPoint
         //文字列を置換する（FileNameをMatchedNumber.Valueに置換する）
         return PathName.Replace(FileName, int.Parse(MatchedNumber.Value).ToString());//Z:\5
     }
-    private void RenameNumberOnlyFile(MainWindow ConfMainWindow,string PathName, string Extension)
-    {
+    private void RenameNumberOnlyFile(MainWindow ConfMainWindow, string PathName, string Extension) {
         string NewFileName = GetNumberOnlyPath(PathName) + Extension;
         if (!System.IO.File.Exists(NewFileName))//重複
             File.Move(PathName + Extension, NewFileName);//重複してない
-        ConfMainWindow.FolderLog.Text+="\nCreated "+NewFileName+".\n";//Show path
+        ConfMainWindow.FolderLog.Text += "\nCreated " + NewFileName + ".\n";//Show path
 
     }
 }

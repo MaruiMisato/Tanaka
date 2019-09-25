@@ -5,13 +5,10 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-
-namespace Tanaka
-{
+namespace Tanaka {
     /// <summary>
     /// App.xaml の相互作用ロジック
     /// </summary>
-    public partial class App : Application
-    {
+    public partial class App : Application {
     }
 }
