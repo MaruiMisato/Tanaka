@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-//using  Entry;
 namespace Tanaka {
     /// <summary>
     /// MainWindow.xaml の相互作用ロジック
