@@ -11,7 +11,7 @@ public class EntryPoint {
             ConfMainWindow.FilesLog.Text += "\n" + PathName;//Show path
             if (File.GetAttributes(PathName).HasFlag(FileAttributes.Directory)) {//フォルダ //JudgeFileOrDirectory
                 if ((bool)ConfMainWindow.ExecutFilesRename.IsChecked)//リネームするか？
-                    if (!FilesRename.RenameFiles(ConfMainWindow, in PathName))
+                    if (!RenameFiles.Entry(ConfMainWindow, in PathName))
                         return;//リネーム失敗
                 long[] FilesSize = new long[2];
                 FilesSize[0] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
