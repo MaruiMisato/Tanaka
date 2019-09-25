@@ -4,7 +4,6 @@ using System.Linq;//enum
 using System.Collections.Generic;//enum
 using System.Text.RegularExpressions;//正規表現
 using Tanaka;
-
 public class EntryPoint {
     public void FileOrFolder(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
         foreach (string PathName in filespath) {//Enumerate acquired paths
