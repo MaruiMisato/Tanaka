@@ -10,10 +10,8 @@ public class EntryPoint {
             ConfMainWindow.FolderLog.Text += "\n" + PathName;
             ConfMainWindow.FilesLog.Text += "\n" + PathName;//Show path
             if (File.GetAttributes(PathName).HasFlag(FileAttributes.Directory)) {//フォルダ //JudgeFileOrDirectory
-                IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*", System.IO.SearchOption.TopDirectoryOnly);//Acquire  files  the path.
-                string[] AllOldFileName = new string[files.Count()];//36*25+100 ファイル数 ゴミ込み
                 if ((bool)ConfMainWindow.ExecutFilesRename.IsChecked)//リネームするか？
-                    if (!FilesRename.RenameFiles(ConfMainWindow, in PathName, ref files, AllOldFileName))
+                    if (!FilesRename.RenameFiles(ConfMainWindow, in PathName))
                         return;//リネーム失敗
                 long[] FilesSize = new long[2];
                 FilesSize[0] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));

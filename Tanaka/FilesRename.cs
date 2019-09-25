@@ -4,22 +4,24 @@ using System.IO;
 using System.Collections.Generic;//enum
 using System.Linq;//enum
 public class FilesRename {
-    public static bool RenameFiles(MainWindow ConfMainWindow, in string PathName, ref IEnumerable<string> files, string[] AllOldFileName) {
-        FilesRename.GetFileNameBeforeChange(ref files, AllOldFileName);
+    public static bool RenameFiles(MainWindow ConfMainWindow, in string PathName) {
+        IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*", System.IO.SearchOption.TopDirectoryOnly);//Acquire  files  the path.
+        string[] AllOldFileName = new string[files.Count()];//36*25+100 ファイル数 ゴミ込み
+        FilesRename.GetFileNameBeforeChange(in files, AllOldFileName);
         int NumberOfImageFiles = files.Count();
         if (!IsTheNumberOfFilesAppropriate(ConfMainWindow, NumberOfImageFiles))//個数が1000以下じゃないとリネームできない
             return false;
         if (SortFiles(ConfMainWindow, NumberOfImageFiles, in PathName, AllOldFileName)) {//ソートできるファイルか
             string[] NewFileName = new string[NumberOfImageFiles];
             CreateOrGetNewFileName(ConfMainWindow, NewFileName);
-            ReNameAlfaBeta(ConfMainWindow, in PathName, ref files, NewFileName);
+            ReNameAlfaBeta(ConfMainWindow, in PathName, in files, NewFileName);
             return true;
         } else {
             UnSortFiles(in PathName, AllOldFileName);
             return false;
         }
     }
-    private static void GetFileNameBeforeChange(ref IEnumerable<string> files, string[] AllOldFileName) {//ゴミファイルを除去 JPG jpeg PNG png種々あるので
+    private static void GetFileNameBeforeChange(in IEnumerable<string> files, string[] AllOldFileName) {//ゴミファイルを除去 JPG jpeg PNG png種々あるので
         int NumberOfImageFiles = -1;//ファイル数をカウント
         foreach (string f in files) {
             FileInfo file = new FileInfo(f);
@@ -44,9 +46,8 @@ public class FilesRename {
             for (int i = 0; i < NewFileName.Length; ++i) // 末尾まで繰り返す
                 NewFileName[i] = sr.ReadLine();// CSVファイルの一行を読み込む
         }
-
     }
-    private static void ReNameAlfaBeta(MainWindow ConfMainWindow, in string PathName, ref IEnumerable<string> files, string[] NewFileName) {
+    private static void ReNameAlfaBeta(MainWindow ConfMainWindow, in string PathName, in IEnumerable<string> files, string[] NewFileName) {
         int i = 0;
         foreach (string f in files) {
             FileInfo file = new FileInfo(f);
