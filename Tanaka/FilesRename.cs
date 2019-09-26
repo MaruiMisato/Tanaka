@@ -7,7 +7,7 @@ public class RenameFiles {
     public static bool Entry(MainWindow ConfMainWindow, in string PathName) {
         IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*", System.IO.SearchOption.TopDirectoryOnly);//Acquire  files  the path.
         string[] AllOldFileName = new string[files.Count()];//36*25+100 ファイル数 ゴミ込み
-        RenameFiles.GetFileNameBeforeChange(in files, AllOldFileName);
+        GetFileNameBeforeChange(in files, AllOldFileName);
         if (!IsTheNumberOfFilesAppropriate(ConfMainWindow, files.Count()))//個数が1000以下じゃないとリネームできない
             return false;
         if (SortFiles(ConfMainWindow, in PathName, in files)) {//ソートできるファイルか
@@ -26,7 +26,6 @@ public class RenameFiles {
                 file.Delete();//Disposal of garbage
             else//jpeg,jpg,png,PNG
                 AllOldFileName[++NumberOfImageFiles] = f;//前置加算のほうが早い？
-            AllOldFileName.Append(f);
         }
     }
     private static void CreateOrGetNewFileName(MainWindow ConfMainWindow, string[] NewFileName) {
@@ -69,7 +68,7 @@ public class RenameFiles {
         }
         return false;
     }
-    private static bool SortFiles(MainWindow ConfMainWindow, int MaxFile, in string PathName, string[] AllOldFileName) {
+    /*private static bool SortFiles(MainWindow ConfMainWindow, int MaxFile, in string PathName, string[] AllOldFileName) {
         for (int i = MaxFile - 1; i >= 0; --i) {//尻からリネームしないと終わらない?
             FileInfo file = new FileInfo(AllOldFileName[i]);
             while ((file.Name.Length - file.Extension.Length) < 3)
@@ -88,7 +87,7 @@ public class RenameFiles {
                 file.MoveTo(PathName + "/z" + file.Name);//0->000  1000枚までしか無理 7zは650枚
         }
         return true;
-    }
+    }/**/
     private static bool SortFiles(MainWindow ConfMainWindow, in string PathName, in IEnumerable<string> files) {
         foreach (string f in files) {
             FileInfo file = new FileInfo(f);

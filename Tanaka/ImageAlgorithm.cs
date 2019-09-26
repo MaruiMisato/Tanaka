@@ -31,34 +31,35 @@ public class ImageAlgorithm {
         public byte Concentration { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
-        public int Times { get; } = 3;
+        public int WidthTimes { get; } = 3;
+        public int HeightTimes { get; } = 3;
     }
-    private static bool CutPNGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
+    private static void FixNoiseInPNG(string f) {
         byte[] OriginHistgram = new byte[Image.Const.Tone8Bit];
         if (Image.GetHistgramR(in f, ref OriginHistgram) == Image.Is.Color) {//カラーでドット埋めは無理
         } else {
             FixPixelMissing(in f);//ピクセル欠けを修正
-            NoiseRemoveTwoArea(in f, OriginHistgram.Max());//小さいゴミ削除
-            NoiseRemoveWhite(in f, OriginHistgram.Min());//小さいゴミ削除
+            NoiseRemoveBlockTwoArea(in f, OriginHistgram.Max());//小さいゴミ黒削除
+            NoiseRemoveWhite(in f, OriginHistgram.Min());//小さいゴミ白削除
             UselessXColumSpacingDeletion(in f);//空白列削除
             UselessYRowSpacingDeletion(in f);//空白行削除
         }
+    }
+    private static bool CutPNGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
+        FixNoiseInPNG(f);
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
         Mat LaplacianImage = new Mat();
         MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
         int Channel = Image.GetHistgramR(in f, ref Histgram);
-        Threshold ImageThreshold = new Threshold {
-            Concentration = ImageAlgorithm.GetConcentrationThreshold(in Histgram, StandardModeIsChecked)//勾配が重要？
-        };
         ImageRect NewImageRect = new ImageRect();
-        if (!ImageAlgorithm.GetNewImageSize(LaplacianImage, ImageThreshold, NewImageRect)) {
+        if (!GetNewImageSize(LaplacianImage, new Threshold { Concentration = GetConcentrationThreshold(in Histgram, StandardModeIsChecked) }, NewImageRect)) {
             InputGrayImage.Dispose();
             LaplacianImage.Dispose();
             return false;
-        }
+        }//勾配が重要？
         LaplacianImage.Dispose();
-        writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + " threshold=" + ImageThreshold.Concentration + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());
+        writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());
         Mat OutputCutImage;
         if (Channel == Image.Is.GrayScale) {
             OutputCutImage = InputGrayImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));
@@ -86,10 +87,10 @@ public class ImageAlgorithm {
             LaplacianImage.Dispose();
             return false;
         }
-        writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")");//prb
+        LaplacianImage.Dispose();
+        writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());
         //jpegtran.exe -crop 808x1208+0+63 -outfile Z:\bin\22\6.jpg Z:\bin\22\6.jpg
         InputGrayImage.Dispose();
-        LaplacianImage.Dispose();
         string Arguments = "-crop " + NewImageRect.Width + "x" + NewImageRect.Height + "+" + NewImageRect.XLow + "+" + NewImageRect.YLow + " -progressive -outfile \"" + f + "\" \"" + f + "\"";
         StandardAlgorithm.ExecuteAnotherApp("jpegtran.exe", in Arguments, false, true);
         return true;
@@ -167,7 +168,7 @@ public class ImageAlgorithm {
             ConfMainWindow.FolderLog.Text += ("pngout:" + sw.Elapsed + "\n");
         }
     }
-    private static unsafe void NoiseRemoveTwoArea(in string f, byte max) {
+    private static unsafe void NoiseRemoveBlockTwoArea(in string f, byte max) {
         Mat p_img = Cv2.ImRead(f, ImreadModes.Grayscale);
         Mat q_img = p_img.Clone();
         byte* p = p_img.DataPointer; byte* q = q_img.DataPointer;
@@ -320,7 +321,7 @@ public class ImageAlgorithm {
         OutputCutImage.Dispose();
         return true;
     }
-    private static unsafe bool FixPixelMissing(in string f) {
+    private static unsafe void FixPixelMissing(in string f) {
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
         Mat FixedImage = InputGrayImage.Clone();
         byte* src = InputGrayImage.DataPointer; byte* dst = FixedImage.DataPointer;
@@ -336,7 +337,6 @@ public class ImageAlgorithm {
         Cv2.ImWrite(f, FixedImage, new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         FixedImage.Dispose();
         InputGrayImage.Dispose();
-        return true;
     }
     private static bool CompareArrayAnd(int ___Threshold___, int[] ___CompareArray___) {
         foreach (int ___CompareValue___ in ___CompareArray___) {
@@ -440,13 +440,13 @@ public class ImageAlgorithm {
         return false;
     }
     private static bool GetNewImageSize(Mat p_img, Threshold ImageThreshold, ImageRect NewImageRect) {
-        ImageThreshold.Width = p_img.Width - ImageThreshold.Times;
+        ImageThreshold.Width = p_img.Width - ImageThreshold.WidthTimes;
         if (!GetYLow(p_img, ImageThreshold, NewImageRect))//Y上取得
             return false;
         if (!GetYHigh(p_img, ImageThreshold, NewImageRect))//X左
             return false;
         NewImageRect.Height = NewImageRect.YHigh - NewImageRect.YLow;
-        ImageThreshold.Height = NewImageRect.Height - ImageThreshold.Times;
+        ImageThreshold.Height = NewImageRect.Height - ImageThreshold.HeightTimes;
         if (!GetXLow(p_img, ImageThreshold, NewImageRect))//Y下取得
             return false;
         if (!GetXHigh(p_img, ImageThreshold, NewImageRect))//X右
