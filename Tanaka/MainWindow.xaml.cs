@@ -19,15 +19,19 @@ namespace Tanaka {
         }
         private void NotArchive_Click(object sender, RoutedEventArgs e) {
             CompressLevel.Visibility = Visibility.Hidden;
+            ArchiveRename.Visibility = Visibility.Hidden;
         }
         private void Rar_Click(object sender, RoutedEventArgs e) {
             CompressLevel.Visibility = Visibility.Visible;
+            ArchiveRename.Visibility = Visibility.Visible;
         }
         private void SevenZip_Click(object sender, RoutedEventArgs e) {
             CompressLevel.Visibility = Visibility.Visible;
+            ArchiveRename.Visibility = Visibility.Visible;
         }
         private void Zip_Click(object sender, RoutedEventArgs e) {
             CompressLevel.Visibility = Visibility.Visible;
+            ArchiveRename.Visibility = Visibility.Visible;
         }
     }
 }

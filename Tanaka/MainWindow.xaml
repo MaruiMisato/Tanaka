@@ -10,6 +10,7 @@
         <CheckBox x:Name="ExecutFilesRename" Content="ExecutFilesRename" HorizontalAlignment="Left" Margin="328,10,0,0" VerticalAlignment="Top" IsChecked="True"/>
         <CheckBox x:Name="MarginRemove" Content="MarginRemove" HorizontalAlignment="Left" Margin="328,30,0,0" VerticalAlignment="Top" IsChecked="True" Click="MarginRemove_Click"/>
         <CheckBox x:Name="PNGout" Content="PNGout" HorizontalAlignment="Left" Margin="328,50,0,0" VerticalAlignment="Top" IsChecked="True"/>
+        <CheckBox x:Name="ArchiveRename" Content="ArchiveRename" HorizontalAlignment="Left" Margin="328,70,0,0" VerticalAlignment="Top" IsChecked="True" Visibility="Visible"/>
         <GroupBox x:Name="Shaving" Header="Shaving" Margin="328,90,340,250" Visibility="Visible">
             <StackPanel HorizontalAlignment="Left" Width="114.122" Margin="0,0,0,0">
                 <RadioButton x:Name="StandardMode" Content="Standard" IsChecked="True"/>

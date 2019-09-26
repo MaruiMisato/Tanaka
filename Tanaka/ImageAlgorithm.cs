@@ -45,14 +45,10 @@ public class ImageAlgorithm {
             UselessYRowSpacingDeletion(in f);//空白行削除
         }
     }
-    private static bool CutPNGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
-        FixNoiseInPNG(f);
-        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+    private static bool CutPNGJPGCommon(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, Mat InputGrayImage, byte[] Histgram, out int Channel, ImageRect NewImageRect, TextWriter writerSync) {
         Mat LaplacianImage = new Mat();
         MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
-        byte[] Histgram = new byte[Image.Const.Tone8Bit];
-        int Channel = Image.GetHistgramR(in f, ref Histgram);
-        ImageRect NewImageRect = new ImageRect();
+        Channel = Image.GetHistgramR(in f, ref Histgram);
         if (!GetNewImageSize(LaplacianImage, new Threshold { Concentration = GetConcentrationThreshold(in Histgram, StandardModeIsChecked) }, NewImageRect)) {
             InputGrayImage.Dispose();
             LaplacianImage.Dispose();
@@ -60,6 +56,24 @@ public class ImageAlgorithm {
         }//勾配が重要？
         LaplacianImage.Dispose();
         writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());
+        return true;
+    }
+    private static bool CutPNGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
+        FixNoiseInPNG(f);
+        Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
+        byte[] Histgram = new byte[Image.Const.Tone8Bit];
+        ImageRect NewImageRect = new ImageRect();
+        //CutPNGJPGCommon(StandardModeIsChecked, StrongestModeIsChecked, in f, InputGrayImage, Histgram, out int Channel, NewImageRect, writerSync);
+        Mat LaplacianImage = new Mat();
+        MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
+        int Channel = Image.GetHistgramR(in f, ref Histgram);
+        if (!GetNewImageSize(LaplacianImage, new Threshold { Concentration = GetConcentrationThreshold(in Histgram, StandardModeIsChecked) }, NewImageRect)) {
+            InputGrayImage.Dispose();
+            LaplacianImage.Dispose();
+            return false;
+        }//勾配が重要？
+        LaplacianImage.Dispose();
+        writerSync.WriteLine(f + " (" + NewImageRect.XLow + "," + NewImageRect.YLow + "),(" + NewImageRect.XHigh + "," + NewImageRect.YHigh + "), (" + InputGrayImage.Width + "," + InputGrayImage.Height + ")->(" + NewImageRect.Width + "," + NewImageRect.Height + ")" + ",Min=" + Histgram.Min() + ",Max=" + Histgram.Max());/*- */
         Mat OutputCutImage;
         if (Channel == Image.Is.GrayScale) {
             OutputCutImage = InputGrayImage.Clone(new OpenCvSharp.Rect(NewImageRect.XLow, NewImageRect.YLow, NewImageRect.Width, NewImageRect.Height));

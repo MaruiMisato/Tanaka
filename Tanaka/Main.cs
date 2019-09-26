@@ -77,7 +77,8 @@ public class EntryPoint {
             Arguments = "a \"" + PathName + Extension + "\" -mmt=on" + CompressLevel + "\"" + PathName + "\\*\"";
         }
         StandardAlgorithm.ExecuteAnotherApp(in FileName, in Arguments, false, true);
-        RenameNumberOnlyFile(ConfMainWindow, PathName, Extension);
+        if ((bool)ConfMainWindow.ArchiveRename.IsChecked)
+            RenameNumberOnlyFile(ConfMainWindow, PathName, Extension);
     }
     private string GetNumberOnlyPath(string PathName) {//ファイル名からX巻のXのみを返す
         string FileName = System.IO.Path.GetFileName(PathName);//Z:\[宮下英樹] センゴク権兵衛 第05巻 ->[宮下英樹] センゴク権兵衛 第05巻
