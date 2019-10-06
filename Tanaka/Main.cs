@@ -8,7 +8,7 @@ public class EntryPoint {
     public void FileOrFolder(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
         foreach (string PathName in filespath) {//Enumerate acquired paths
             ConfMainWindow.FolderLog.Text += "\n" + PathName;
-            ConfMainWindow.FilesLog.Text += "\n" + PathName;//Show path
+            ConfMainWindow.FilesLog.Text += "\n" + PathName+"\n";//Show path
             if (File.GetAttributes(PathName).HasFlag(FileAttributes.Directory)) {//フォルダ //JudgeFileOrDirectory
                 if ((bool)ConfMainWindow.ExecutFilesRename.IsChecked)//リネームするか？
                     if (!RenameFiles.Entry(ConfMainWindow, in PathName))
