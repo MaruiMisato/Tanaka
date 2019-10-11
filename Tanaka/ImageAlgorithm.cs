@@ -34,15 +34,22 @@ public class ImageAlgorithm {
         public int WidthTimes { get; } = 3;
         public int HeightTimes { get; } = 3;
     }
-    private static void FixNoiseInPNG(string f) {
+    private static void FixNoiseInPNG(bool StandardModeIsChecked, bool StrongestModeIsChecked, string f) {
         byte[] OriginHistgram = new byte[Image.Const.Tone8Bit];
         if (Image.GetHistgramR(in f, ref OriginHistgram) == Image.Is.Color) {//カラーでドット埋めは無理
-        } else {
+        } else if (StandardModeIsChecked) {//StandardMode 画像改変は行わない
+        } else if (StrongestModeIsChecked) {//StrongestMode 画像改変あり，改変後に余白削除
             FixPixelMissing(in f);//ピクセル欠けを修正
             NoiseRemoveBlockTwoArea(in f, OriginHistgram.Max());//小さいゴミ黒削除
             NoiseRemoveWhite(in f, OriginHistgram.Min());//小さいゴミ白削除
+            NoiseRemoveBlockTwoArea(in f, OriginHistgram.Max());//小さいゴミ黒削除
+            NoiseRemoveWhite(in f, OriginHistgram.Min());//小さいゴミ白削除
+        } else {//StrongMode 空白行を削除してから画像改変
             UselessXColumSpacingDeletion(in f);//空白列削除
             UselessYRowSpacingDeletion(in f);//空白行削除
+            FixPixelMissing(in f);//ピクセル欠けを修正
+            NoiseRemoveBlockTwoArea(in f, OriginHistgram.Max());//小さいゴミ黒削除
+            NoiseRemoveWhite(in f, OriginHistgram.Min());//小さいゴミ白削除
         }
     }
     private static bool CutPNGJPGCommon(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, Mat InputGrayImage, byte[] Histgram, out int Channel, ImageRect NewImageRect, TextWriter writerSync) {
@@ -59,11 +66,12 @@ public class ImageAlgorithm {
         return true;
     }
     private static bool CutPNGMarginMain(bool StandardModeIsChecked, bool StrongestModeIsChecked, in string f, TextWriter writerSync) {
-        FixNoiseInPNG(f);
+        FixNoiseInPNG(StandardModeIsChecked, StrongestModeIsChecked, f);
         Mat InputGrayImage = Cv2.ImRead(f, ImreadModes.Grayscale);
         byte[] Histgram = new byte[Image.Const.Tone8Bit];
         ImageRect NewImageRect = new ImageRect();
-        //CutPNGJPGCommon(StandardModeIsChecked, StrongestModeIsChecked, in f, InputGrayImage, Histgram, out int Channel, NewImageRect, writerSync);
+        /*if(!CutPNGJPGCommon(StandardModeIsChecked, StrongestModeIsChecked, in f, InputGrayImage, Histgram, out int Channel, NewImageRect, writerSync))
+            return false;/*- */
         Mat LaplacianImage = new Mat();
         MedianLaplacianMedian(StandardModeIsChecked, StrongestModeIsChecked, InputGrayImage, LaplacianImage);//MedianLaplacianMedianをかけて画像平滑化
         int Channel = Image.GetHistgramR(in f, ref Histgram);
@@ -153,8 +161,7 @@ public class ImageAlgorithm {
             return;
         } else {//図表マンガ メディアンフィルタ実行 画像サイズに応じてマスクサイズを決める
             Mat MedianImage = new Mat();
-            Cv2.MedianBlur(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
-            //Image.FastestMedian(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
+            Cv2.MedianBlur(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));//Image.FastestMedian(InputGrayImage, MedianImage, GetRangeMedianF(InputGrayImage));
             Cv2.Laplacian(MedianImage, LaplacianImage, MatType.CV_8U);
             MedianImage.Dispose();
             Cv2.MedianBlur(LaplacianImage, LaplacianImage, 3);

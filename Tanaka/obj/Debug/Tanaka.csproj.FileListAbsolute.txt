@@ -1,0 +1,3 @@
+C:\Users\kanri\Desktop\tools\Tanaka\Tanaka\obj\Debug\Tanaka.csprojAssemblyReference.cache
+C:\Users\kanri\Desktop\tools\Tanaka\Tanaka\obj\Debug\Tanaka.Properties.Resources.resources
+C:\Users\kanri\Desktop\tools\Tanaka\Tanaka\obj\Debug\Tanaka.csproj.GenerateResource.cache

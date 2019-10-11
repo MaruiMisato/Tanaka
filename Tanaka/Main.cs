@@ -8,7 +8,7 @@ public class EntryPoint {
     public void FileOrFolder(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
         foreach (string PathName in filespath) {//Enumerate acquired paths
             ConfMainWindow.FolderLog.Text += "\n" + PathName;
-            ConfMainWindow.FilesLog.Text += "\n" + PathName+"\n";//Show path
+            ConfMainWindow.FilesLog.Text += "\n" + PathName + "\n";//Show path
             if (File.GetAttributes(PathName).HasFlag(FileAttributes.Directory)) {//フォルダ //JudgeFileOrDirectory
                 if ((bool)ConfMainWindow.ExecutFilesRename.IsChecked)//リネームするか？
                     if (!RenameFiles.Entry(ConfMainWindow, in PathName))
@@ -37,6 +37,9 @@ public class EntryPoint {
             }
         }
         CompressLogsWith7z(ConfMainWindow);
+        using (var player = new System.Media.SoundPlayer(@"Alarm03.wav")) {
+            player.Play();
+        }
     }
     private void CompressLogsWith7z(MainWindow ConfMainWindow) {
         using (TextWriter writerSync = TextWriter.Synchronized(new StreamWriter(DateTime.Now.ToString("HH.mm.ss") + ".log", false, System.Text.Encoding.GetEncoding("shift_jis")))) {
