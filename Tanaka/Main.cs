@@ -17,15 +17,7 @@ public class EntryPoint {
                         return;//リネーム失敗
                 long[] FilesSize = new long[2];
                 FilesSize[0] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
-                if ((bool)ConfMainWindow.To8bitGray.IsChecked) {//24bitGrayTo8bitGray やらない選択肢があるから，やらない場合は24bitGrayが存在してしまう，強制化はできない．
-                    ImageAlgorithm.ColorOrGray(PathName);
-                }
-                if ((bool)ConfMainWindow.MarginRemove.IsChecked) {
-                    ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, PathName);
-                }
-                if ((bool)ConfMainWindow.PNGout.IsChecked)
-                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in PathName);
-                ImageAlgorithm.CarmineCliAuto(in PathName);
+                ImageAlgorithm.ReduceImages(ConfMainWindow, PathName);
                 FilesSize[1] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
                 DiplayFilesSize(ConfMainWindow, FilesSize);
                 if (!(bool)ConfMainWindow.NotArchive.IsChecked)
@@ -34,11 +26,7 @@ public class EntryPoint {
                 string NewPath = System.IO.Path.GetDirectoryName(PathName) + "\\new\\";
                 System.IO.Directory.CreateDirectory(NewPath);//"\\new"
                 System.IO.File.Copy(PathName, NewPath + Path.GetFileName(PathName), true);//"\\new\\hoge.jpg"
-                if ((bool)ConfMainWindow.MarginRemove.IsChecked)
-                    ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, NewPath);//該当ファイルのあるフォルダの奴はすべて実行される別フォルダに単体コピーが理想*/
-                if ((bool)ConfMainWindow.PNGout.IsChecked)
-                    ImageAlgorithm.ExecutePNGout(ConfMainWindow, in NewPath);
-                ImageAlgorithm.CarmineCliAuto(in NewPath);
+                ImageAlgorithm.ReduceImages(ConfMainWindow, NewPath);
             }
         }
         CompressLogsWith7z(ConfMainWindow);

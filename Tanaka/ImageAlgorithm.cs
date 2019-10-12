@@ -42,7 +42,16 @@ public class ImageAlgorithm {
         }
         return MaxSaturation;
     }
-    public static void ColorOrGray(string PathName) {
+    public static void ReduceImages(MainWindow ConfMainWindow, string NewPath) {
+        if ((bool)ConfMainWindow.To8bitGray.IsChecked) //24bitGrayTo8bitGray やらない選択肢があるから，やらない場合は24bitGrayが存在してしまう，強制化はできない．
+            ImageAlgorithm.ColorOrGray(NewPath);
+        if ((bool)ConfMainWindow.MarginRemove.IsChecked)
+            ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, NewPath);//該当ファイルのあるフォルダの奴はすべて実行される別フォルダに単体コピーが理想*/
+        if ((bool)ConfMainWindow.PNGout.IsChecked)
+            ImageAlgorithm.ExecutePNGout(ConfMainWindow, in NewPath);
+        ImageAlgorithm.CarmineCliAuto(in NewPath);
+    }
+    private static void ColorOrGray(string PathName) {
         IEnumerable<string> JPGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.jpg", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
         JPGColorOrGray(JPGFiles);
         IEnumerable<string> JPEGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.jpeg", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
@@ -60,15 +69,14 @@ public class ImageAlgorithm {
                     Mat HSVImage = new Mat(); ;
                     Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換
                     if (GetMaxSaturation(HSVImage) < 180) {
-                        var app = new System.Diagnostics.ProcessStartInfo();
-                        app.FileName = "jpegtran.exe";//jpegtran -grayscale -outfile Z:\bin\22\5.5.jpg Z:\bin\22\5.jpg
-                        app.Arguments = "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"";
-                        app.UseShellExecute = false;
-                        app.CreateNoWindow = true;    // コンソール・ウィンドウを開かない
-                        System.Diagnostics.Process p = System.Diagnostics.Process.Start(app);
-                        p.WaitForExit();    // プロセスの終了を待つ
-                    } 
-                } 
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                            FileName = "jpegtran.exe",//jpegtran -grayscale -outfile Z:\bin\22\5.5.jpg Z:\bin\22\5.jpg
+                            Arguments = "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true    // コンソール・ウィンドウを開かない
+                        }).WaitForExit();    // プロセスの終了を待つ
+                    }
+                }
             });
     }
     private static void PNGColorOrGray(IEnumerable<string> PNGFiles) {
@@ -79,7 +87,7 @@ public class ImageAlgorithm {
                     Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換します．//ShowImage(nameof(YUVImage), YUVImage);
                     if (GetMaxSaturation(HSVImage) < 180)
                         Cv2.ImWrite(f, Cv2.ImRead(f, ImreadModes.Grayscale), new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
-                } 
+                }
             });
     }
     private static void FixNoiseInPNG(bool StandardModeIsChecked, bool StrongestModeIsChecked, string f) {
@@ -165,7 +173,7 @@ public class ImageAlgorithm {
         StandardAlgorithm.ExecuteAnotherApp("jpegtran.exe", in Arguments, false, true);
         return true;
     }
-    public static void RemoveMarginEntry(MainWindow ConfMainWindow, string PathName) {
+    private static void RemoveMarginEntry(MainWindow ConfMainWindow, string PathName) {
         bool StandardModeIsChecked = (bool)ConfMainWindow.StandardMode.IsChecked, StrongestModeIsChecked = (bool)ConfMainWindow.StrongestMode.IsChecked;
         using (TextWriter writerSync = TextWriter.Synchronized(new StreamWriter(DateTime.Now.ToString("HH.mm.ss_") + System.IO.Path.GetFileName(PathName) + ".log", false, System.Text.Encoding.GetEncoding("shift_jis")))) {
             IEnumerable<string> PNGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.png", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
@@ -220,12 +228,12 @@ public class ImageAlgorithm {
             element.Dispose();
         }
     }
-    public static void CarmineCliAuto(in string PathName) {//ハフマンテーブルの最適化によってjpgサイズを縮小
+    private static void CarmineCliAuto(in string PathName) {//ハフマンテーブルの最適化によってjpgサイズを縮小
         IEnumerable<string> files = System.IO.Directory.EnumerateFiles(PathName, "*.jpg", System.IO.SearchOption.AllDirectories);//Acquire only jpg files under the path.
         if (files.Any())
             Parallel.ForEach(files, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => StandardAlgorithm.ExecuteAnotherApp("carmine_cli.exe", "\"" + f + "\" -o", false, true));//マルチスレッド化するのでファイル毎
     }
-    public static void ExecutePNGout(Tanaka.MainWindow ConfMainWindow, in string PathName) {
+    private static void ExecutePNGout(Tanaka.MainWindow ConfMainWindow, in string PathName) {
         IEnumerable<string> PNGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.png", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
         if (PNGFiles.Any()) {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();//stop watch get time
