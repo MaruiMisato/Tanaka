@@ -28,17 +28,10 @@ public class RenameFiles {
                 AllOldFileName[++NumberOfImageFiles] = f;//前置加算のほうが早い？
         }
     }
-    private static void CreateOrGetNewFileName(MainWindow ConfMainWindow, string[] NewFileName) {
+    private static void CreateOrGetNewFileName(string[] NewFileName) {
         string NewNamesFilesPath = @"NewName1000.csv";//zip under 36*25+100=1000
         if (NewFileName.Length <= 36)//一桁で0-9,a-z=36
             NewNamesFilesPath = @"NewName36.csv";
-        else if ((bool)ConfMainWindow.SevenZip.IsChecked && NewFileName.Length <= 26 * 25) {//7zip under 26*25=650未満 かつ37以上
-            int MaxRoot = (int)System.Math.Sqrt(NewFileName.Length) + 1;
-            ConfMainWindow.FolderLog.Text += "\nroot MaxRoot" + MaxRoot;
-            for (int i = 0; i < NewFileName.Length; ++i)
-                NewFileName[i] = (char)((i / MaxRoot) + 'a') + ((char)(i % MaxRoot + 'a')).ToString();//26*25  36*35mezasu
-            return;
-        }
         using (StreamReader sr = new StreamReader(NewNamesFilesPath)) {
             for (int i = 0; i < NewFileName.Length; ++i) // 末尾まで繰り返す
                 NewFileName[i] = sr.ReadLine();// CSVファイルの一行を読み込む
@@ -46,7 +39,7 @@ public class RenameFiles {
     }
     private static void ReNameAlfaBeta(MainWindow ConfMainWindow, in string PathName, in IEnumerable<string> files) {
         string[] NewFileName = new string[files.Count()];
-        CreateOrGetNewFileName(ConfMainWindow, NewFileName);
+        CreateOrGetNewFileName(NewFileName);
         int i = 0;
         foreach (string f in files) {
             FileInfo file = new FileInfo(f);

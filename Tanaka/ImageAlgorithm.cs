@@ -34,14 +34,6 @@ public class ImageAlgorithm {
         public int WidthTimes { get; } = 3;
         public int HeightTimes { get; } = 3;
     }
-    private unsafe static int GetMaxSaturation(Mat HSVImage) {
-        int MaxSaturation = 0;
-        byte* p = HSVImage.DataPointer;
-        for (int yx = 1; yx < HSVImage.Height * HSVImage.Width * 3; yx += 3) {//HSVのSを取得したいのでyxの初期値が1，Hなら0，Vなら2
-            MaxSaturation = MaxSaturation > p[yx] ? MaxSaturation : p[yx];
-        }
-        return MaxSaturation;
-    }
     public static void ReduceImages(MainWindow ConfMainWindow, string NewPath) {
         if ((bool)ConfMainWindow.To8bitGray.IsChecked) //24bitGrayTo8bitGray やらない選択肢があるから，やらない場合は24bitGrayが存在してしまう，強制化はできない．
             ImageAlgorithm.ColorOrGray(NewPath);
@@ -63,32 +55,37 @@ public class ImageAlgorithm {
 
     }
     private static void JPGColorOrGray(IEnumerable<string> JPGFiles) {
-        if (JPGFiles.Any())
-            Parallel.ForEach(JPGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
-                if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() != 1) {
-                    Mat HSVImage = new Mat(); ;
-                    Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換
-                    if (GetMaxSaturation(HSVImage) < 180) {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                            FileName = "jpegtran.exe",//jpegtran -grayscale -outfile Z:\bin\22\5.5.jpg Z:\bin\22\5.jpg
-                            Arguments = "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"",
-                            UseShellExecute = false,
-                            CreateNoWindow = true    // コンソール・ウィンドウを開かない
-                        }).WaitForExit();    // プロセスの終了を待つ
-                    }
-                }
-            });
+        if (!JPGFiles.Any())
+            return;
+        Parallel.ForEach(JPGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
+            if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() == 1) //8bitgrayscale
+                return;
+            if (GetMaxSaturation(f) > 179) //24bitcolor
+                return;
+            StandardAlgorithm.ExecuteAnotherApp("jpegtran.exe", "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"", false, true);
+        });
+    }
+    private unsafe static int GetMaxSaturation(string f) {
+        Mat HSVImage = new Mat(); ;
+        Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換
+        int MaxSaturation = 0;
+        byte* p = HSVImage.DataPointer;
+        for (int yx = 1; yx < HSVImage.Height * HSVImage.Width * 3; yx += 3) {//HSVのSを取得したいのでyxの初期値が1，Hなら0，Vなら2
+            MaxSaturation = MaxSaturation > p[yx] ? MaxSaturation : p[yx];
+        }
+        HSVImage.Dispose();
+        return MaxSaturation;
     }
     private static void PNGColorOrGray(IEnumerable<string> PNGFiles) {
-        if (PNGFiles.Any())
-            Parallel.ForEach(PNGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
-                if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() != 1) {
-                    Mat HSVImage = new Mat();
-                    Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換します．//ShowImage(nameof(YUVImage), YUVImage);
-                    if (GetMaxSaturation(HSVImage) < 180)
-                        Cv2.ImWrite(f, Cv2.ImRead(f, ImreadModes.Grayscale), new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
-                }
-            });
+        if (!PNGFiles.Any())
+            return;
+        Parallel.ForEach(PNGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
+            if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() == 1)
+                return;
+            if (GetMaxSaturation(f) > 179)
+                return;
+            Cv2.ImWrite(f, Cv2.ImRead(f, ImreadModes.Grayscale), new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
+        });
     }
     private static void FixNoiseInPNG(bool StandardModeIsChecked, bool StrongestModeIsChecked, string f) {
         byte[] OriginHistgram = new byte[Image.Const.Tone8Bit];
