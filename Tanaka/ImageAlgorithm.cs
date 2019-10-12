@@ -34,6 +34,54 @@ public class ImageAlgorithm {
         public int WidthTimes { get; } = 3;
         public int HeightTimes { get; } = 3;
     }
+    private unsafe static int GetMaxSaturation(Mat HSVImage) {
+        int MaxSaturation = 0;
+        byte* p = HSVImage.DataPointer;
+        for (int yx = 1; yx < HSVImage.Height * HSVImage.Width * 3; yx += 3) {//HSVのSを取得したいのでyxの初期値が1，Hなら0，Vなら2
+            MaxSaturation = MaxSaturation > p[yx] ? MaxSaturation : p[yx];
+        }
+        return MaxSaturation;
+    }
+    public static void ColorOrGray(string PathName) {
+        IEnumerable<string> JPGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.jpg", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
+        JPGColorOrGray(JPGFiles);
+        IEnumerable<string> JPEGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.jpeg", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
+        JPGColorOrGray(JPEGFiles);
+        IEnumerable<string> PngFiles = System.IO.Directory.EnumerateFiles(PathName, "*.png", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
+        PNGColorOrGray(PngFiles);
+        IEnumerable<string> PNGFiles = System.IO.Directory.EnumerateFiles(PathName, "*.PNG", System.IO.SearchOption.AllDirectories);//Acquire only png files under the path.
+        PNGColorOrGray(PNGFiles);
+
+    }
+    private static void JPGColorOrGray(IEnumerable<string> JPGFiles) {
+        if (JPGFiles.Any())
+            Parallel.ForEach(JPGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
+                if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() != 1) {
+                    Mat HSVImage = new Mat(); ;
+                    Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換
+                    if (GetMaxSaturation(HSVImage) < 180) {
+                        var app = new System.Diagnostics.ProcessStartInfo();
+                        app.FileName = "jpegtran.exe";//jpegtran -grayscale -outfile Z:\bin\22\5.5.jpg Z:\bin\22\5.jpg
+                        app.Arguments = "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"";
+                        app.UseShellExecute = false;
+                        app.CreateNoWindow = true;    // コンソール・ウィンドウを開かない
+                        System.Diagnostics.Process p = System.Diagnostics.Process.Start(app);
+                        p.WaitForExit();    // プロセスの終了を待つ
+                    } 
+                } 
+            });
+    }
+    private static void PNGColorOrGray(IEnumerable<string> PNGFiles) {
+        if (PNGFiles.Any())
+            Parallel.ForEach(PNGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
+                if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() != 1) {
+                    Mat HSVImage = new Mat();
+                    Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換します．//ShowImage(nameof(YUVImage), YUVImage);
+                    if (GetMaxSaturation(HSVImage) < 180)
+                        Cv2.ImWrite(f, Cv2.ImRead(f, ImreadModes.Grayscale), new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
+                } 
+            });
+    }
     private static void FixNoiseInPNG(bool StandardModeIsChecked, bool StrongestModeIsChecked, string f) {
         byte[] OriginHistgram = new byte[Image.Const.Tone8Bit];
         if (Image.GetHistgramR(in f, ref OriginHistgram) == Image.Is.Color) {//カラーでドット埋めは無理

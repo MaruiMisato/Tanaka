@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Linq;//enum
-using System.Collections.Generic;//enum
+//using System.Linq;//enum
+//using System.Collections.Generic;//enum
 using System.Text.RegularExpressions;//正規表現
 using Tanaka;
 public class EntryPoint {
     public void FileOrFolder(MainWindow ConfMainWindow, System.Collections.Specialized.StringCollection filespath) {
+        ConfMainWindow.FolderLog.Text = "";
+        ConfMainWindow.FolderLog.Text = "";
         foreach (string PathName in filespath) {//Enumerate acquired paths
             ConfMainWindow.FolderLog.Text += "\n" + PathName;
             ConfMainWindow.FilesLog.Text += "\n" + PathName + "\n";//Show path
@@ -15,6 +17,9 @@ public class EntryPoint {
                         return;//リネーム失敗
                 long[] FilesSize = new long[2];
                 FilesSize[0] = StandardAlgorithm.Directory.GetDirectorySize(new DirectoryInfo(PathName));
+                if ((bool)ConfMainWindow.To8bitGray.IsChecked) {//24bitGrayTo8bitGray やらない選択肢があるから，やらない場合は24bitGrayが存在してしまう，強制化はできない．
+                    ImageAlgorithm.ColorOrGray(PathName);
+                }
                 if ((bool)ConfMainWindow.MarginRemove.IsChecked) {
                     ImageAlgorithm.RemoveMarginEntry(ConfMainWindow, PathName);
                 }
