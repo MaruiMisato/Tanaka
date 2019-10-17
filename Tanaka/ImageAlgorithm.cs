@@ -5,7 +5,7 @@ using Tanaka;
 using OpenCvSharp;
 using System;
 using System.IO;
-
+using System.Windows;
 public class ImageAlgorithm {
     static class Cleanliness {
         public const int Clean = 15;//小説Text
@@ -58,33 +58,46 @@ public class ImageAlgorithm {
         if (!JPGFiles.Any())
             return;
         Parallel.ForEach(JPGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
-            if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() == 1) //8bitgrayscale
-                return;
-            if (GetMaxSaturation(f) > 179) //24bitcolor
-                return;
-            StandardAlgorithm.ExecuteAnotherApp("jpegtran.exe", "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"", false, true);
+            if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() == 1) { //8bitgrayscale//System.Windows.MessageBox.Show(f + "" + Cv2.ImRead(f, ImreadModes.Unchanged).Channels());
+                //8bitgrayは何もしなくていいよ
+            } else if (GetMaxSaturation(f) > 179) {//24bitcolor
+                ////24bitcolorは言わずもがな何もしなくていい
+            } else StandardAlgorithm.ExecuteAnotherApp("jpegtran.exe", "-grayscale -progressive -outfile \"" + f + "\" \"" + f + "\"", false, true);
         });
     }
     private unsafe static int GetMaxSaturation(string f) {
-        Mat HSVImage = new Mat(); ;
-        Cv2.CvtColor(Cv2.ImRead(f, ImreadModes.Color), HSVImage, ColorConversionCodes.BGR2HSV);// 画像を，HSV色空間に変換
         int MaxSaturation = 0;
-        byte* p = HSVImage.DataPointer;
-        for (int yx = 1; yx < HSVImage.Height * HSVImage.Width * 3; yx += 3) {//HSVのSを取得したいのでyxの初期値が1，Hなら0，Vなら2
-            MaxSaturation = MaxSaturation > p[yx] ? MaxSaturation : p[yx];
+        Mat RGBImage = Cv2.ImRead(f, ImreadModes.Color);//8bit*3
+        byte* p = RGBImage.DataPointer;
+        int ImageSize = RGBImage.Height * RGBImage.Width * 3;
+        for (int yx = 0; yx < ImageSize; yx += 3) {//HSVのSを取得したいのでyxの初期値が1，Hなら0，Vなら2
+            if (p[yx] < p[yx + 1]) {
+                if (p[yx + 1] < p[yx + 2]) {
+                    MaxSaturation = MaxSaturation > p[yx + 2] - p[yx] ? MaxSaturation : p[yx + 2] - p[yx];//0<1<2
+                } else if (p[yx + 0] < p[yx + 2]) {
+                    MaxSaturation = MaxSaturation > p[yx + 1] - p[yx] ? MaxSaturation : p[yx + 1] - p[yx];//0<2<1
+                } else {
+                    MaxSaturation = MaxSaturation > p[yx + 1] - p[yx + 2] ? MaxSaturation : p[yx + 1] - p[yx + 2];//2<0<1
+                }
+            } else if (p[yx + 1] < p[yx + 2]) {
+                if (p[yx + 0] < p[yx + 2]) {
+                    MaxSaturation = MaxSaturation > p[yx + 2] - p[yx + 1] ? MaxSaturation : p[yx + 2] - p[yx + 1];//1<0<2
+                } else {
+                    MaxSaturation = MaxSaturation > p[yx + 0] - p[yx + 1] ? MaxSaturation : p[yx + 0] - p[yx + 1];//1<2<0
+                }
+            } else {
+                MaxSaturation = MaxSaturation > p[yx + 0] - p[yx + 2] ? MaxSaturation : p[yx + 0] - p[yx + 2];//2<1<0
+            }
         }
-        HSVImage.Dispose();
         return MaxSaturation;
     }
     private static void PNGColorOrGray(IEnumerable<string> PNGFiles) {
         if (!PNGFiles.Any())
             return;
         Parallel.ForEach(PNGFiles, new ParallelOptions() { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, f => {
-            if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() == 1)
-                return;
-            if (GetMaxSaturation(f) > 179)
-                return;
-            Cv2.ImWrite(f, Cv2.ImRead(f, ImreadModes.Grayscale), new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
+            if (Cv2.ImRead(f, ImreadModes.Unchanged).Channels() == 1) {
+            } else if (GetMaxSaturation(f) > 179) {
+            } else Cv2.ImWrite(f, Cv2.ImRead(f, ImreadModes.Grayscale), new ImageEncodingParam(ImwriteFlags.PngCompression, 0));
         });
     }
     private static void FixNoiseInPNG(bool StandardModeIsChecked, bool StrongestModeIsChecked, string f) {
